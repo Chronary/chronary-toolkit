@@ -1,0 +1,133 @@
+{
+  "name": "@chronary/toolkit",
+  "version": "0.1.0",
+  "description": "AI agent framework adapters for Chronary calendar tools",
+  "license": "Apache-2.0",
+  "type": "module",
+  "packageManager": "pnpm@9.15.4",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./ai-sdk": {
+      "import": {
+        "types": "./dist/ai-sdk.d.ts",
+        "default": "./dist/ai-sdk.js"
+      },
+      "require": {
+        "types": "./dist/ai-sdk.d.cts",
+        "default": "./dist/ai-sdk.cjs"
+      }
+    },
+    "./mcp": {
+      "import": {
+        "types": "./dist/mcp.d.ts",
+        "default": "./dist/mcp.js"
+      },
+      "require": {
+        "types": "./dist/mcp.d.cts",
+        "default": "./dist/mcp.cjs"
+      }
+    },
+    "./openai": {
+      "import": {
+        "types": "./dist/openai.d.ts",
+        "default": "./dist/openai.js"
+      },
+      "require": {
+        "types": "./dist/openai.d.cts",
+        "default": "./dist/openai.cjs"
+      }
+    },
+    "./langchain": {
+      "import": {
+        "types": "./dist/langchain.d.ts",
+        "default": "./dist/langchain.js"
+      },
+      "require": {
+        "types": "./dist/langchain.d.cts",
+        "default": "./dist/langchain.cjs"
+      }
+    },
+    "./mastra": {
+      "import": {
+        "types": "./dist/mastra.d.ts",
+        "default": "./dist/mastra.js"
+      },
+      "require": {
+        "types": "./dist/mastra.d.cts",
+        "default": "./dist/mastra.cjs"
+      }
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "chronary",
+    "ai-agent",
+    "ai-tools",
+    "calendar-api",
+    "vercel-ai-sdk",
+    "mcp",
+    "openai",
+    "langchain",
+    "mastra",
+    "toolkit"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Chronary/chronary-toolkit"
+  },
+  "homepage": "https://docs.chronary.ai",
+  "bugs": {
+    "url": "https://github.com/Chronary/chronary-toolkit/issues"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@chronary/sdk": "workspace:*",
+    "zod": "^3.23",
+    "zod-to-json-schema": "^3.24.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "vitest": "^3.0.0",
+    "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "ai": ">=4.0.0",
+    "@modelcontextprotocol/sdk": ">=1.0.0",
+    "openai": ">=4.0.0",
+    "@langchain/core": ">=0.3.0",
+    "@mastra/core": ">=0.5.0"
+  },
+  "peerDependenciesMeta": {
+    "ai": { "optional": true },
+    "@modelcontextprotocol/sdk": { "optional": true },
+    "openai": { "optional": true },
+    "@langchain/core": { "optional": true },
+    "@mastra/core": { "optional": true }
+  }
+}
