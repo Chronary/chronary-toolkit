@@ -3,6 +3,30 @@ import * as schemas from './schemas';
 import * as fns from './functions';
 import { createExecutor } from './functions';
 
+export const HOSTED_API_MCP_TOOL_NAMES = [
+  'create_agent',
+  'list_agents',
+  'create_calendar',
+  'create_event',
+  'list_events',
+  'get_availability',
+  'find_meeting_time',
+  'cancel_event',
+  'confirm_event',
+  'release_event',
+  'subscribe_ical',
+  'get_calendar_context',
+  'create_proposal',
+  'list_proposals',
+  'get_proposal',
+  'respond_to_proposal',
+  'resolve_proposal',
+  'cancel_proposal',
+  'set_availability_rules',
+  'get_availability_rules',
+  'clear_availability_rules',
+] as const;
+
 export const TOOL_DEFINITIONS: ToolDefinition[] = [
   // ── Calendars ──────────────────────────────────────────────────
   {
@@ -177,3 +201,12 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     execute: createExecutor(fns.getUsage),
   },
 ];
+
+const toolkitToolNames = new Set<string>(TOOL_DEFINITIONS.map((tool) => tool.name));
+const hostedToolNames = new Set<string>(HOSTED_API_MCP_TOOL_NAMES);
+
+export const TOOLKIT_MCP_PARITY = {
+  hostedToolNames: HOSTED_API_MCP_TOOL_NAMES,
+  missingHostedTools: HOSTED_API_MCP_TOOL_NAMES.filter((name) => !toolkitToolNames.has(name)),
+  toolkitOnlyTools: TOOL_DEFINITIONS.map((tool) => tool.name).filter((name) => !hostedToolNames.has(name)),
+};

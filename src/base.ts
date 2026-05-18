@@ -4,7 +4,12 @@ import { TOOL_DEFINITIONS } from './definitions';
 
 function resolveClient(config: ChronaryToolkitConfig): Chronary {
   if ('client' in config && config.client) return config.client;
-  const { tools: _tools, ...sdkConfig } = config as { apiKey?: string; baseUrl?: string; tools?: ToolName[] };
+  const { tools: _tools, ...sdkConfig } = config as {
+    apiKey?: string;
+    baseUrl?: string;
+    tools?: ToolName[];
+    extraHeaders?: Record<string, string>;
+  };
   return new Chronary(sdkConfig);
 }
 

@@ -5,7 +5,7 @@ vi.mock('@chronary/sdk', () => ({
   Chronary: vi.fn().mockImplementation(() => ({})),
 }));
 
-const config = { apiKey: 'chr_sk_live_test123' };
+const config = { apiKey: 'chr_sk_test123' };
 
 describe('Mastra adapter', () => {
   it('returns Record<string, MastraTool> with all 23 tools', () => {

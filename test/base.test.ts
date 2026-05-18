@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { TOOL_DEFINITIONS } from '../src/definitions';
+import { HOSTED_API_MCP_TOOL_NAMES, TOOLKIT_MCP_PARITY, TOOL_DEFINITIONS } from '../src/definitions';
 import { ListToolkit, MapToolkit } from '../src/base';
 import type { ToolDefinition, ChronaryToolkitConfig } from '../src/types';
 
@@ -16,7 +16,7 @@ class TestMapToolkit extends MapToolkit<string> {
   protected buildTool(def: ToolDefinition): string { return def.name; }
 }
 
-const config: ChronaryToolkitConfig = { apiKey: 'chr_sk_live_test123' };
+const config: ChronaryToolkitConfig = { apiKey: 'chr_sk_test123' };
 
 describe('TOOL_DEFINITIONS', () => {
   it('has exactly 23 entries', () => {
@@ -36,6 +36,30 @@ describe('TOOL_DEFINITIONS', () => {
   it('has unique names', () => {
     const names = TOOL_DEFINITIONS.map(d => d.name);
     expect(new Set(names).size).toBe(names.length);
+  });
+
+  it('documents known hosted API MCP parity drift', () => {
+    expect(HOSTED_API_MCP_TOOL_NAMES).toHaveLength(21);
+    expect(TOOLKIT_MCP_PARITY.missingHostedTools).toEqual([
+      'create_agent',
+      'list_agents',
+      'get_availability',
+      'find_meeting_time',
+      'cancel_event',
+      'confirm_event',
+      'release_event',
+      'subscribe_ical',
+      'get_calendar_context',
+      'create_proposal',
+      'list_proposals',
+      'get_proposal',
+      'respond_to_proposal',
+      'resolve_proposal',
+      'cancel_proposal',
+      'set_availability_rules',
+      'get_availability_rules',
+      'clear_availability_rules',
+    ]);
   });
 });
 

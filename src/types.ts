@@ -81,4 +81,14 @@ export interface ToolDefinition {
 /** Config for creating any toolkit adapter */
 export type ChronaryToolkitConfig =
   | { client: Chronary; tools?: ToolName[] }
-  | { apiKey?: string; baseUrl?: string; tools?: ToolName[] };
+  | {
+      apiKey?: string;
+      baseUrl?: string;
+      tools?: ToolName[];
+      /**
+       * Extra headers attached to every SDK request. Wrappers (e.g.
+       * `chronary-mcp`) set `X-Chronary-Client` here so the API can
+       * attribute the wrapper's traffic separately from the bare SDK's.
+       */
+      extraHeaders?: Record<string, string>;
+    };

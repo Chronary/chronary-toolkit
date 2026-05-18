@@ -54,7 +54,6 @@ export const FIXTURES = {
     name: 'Team Meetings',
     timezone: 'America/Los_Angeles',
     metadata: {},
-    isTest: false,
     ical_url: 'https://api.chronary.ai/ical/token.ics',
     deletedAt: null,
     createdAt: '2026-04-01T00:00:00Z',
