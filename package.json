@@ -1,6 +1,6 @@
 {
   "name": "@chronary/toolkit",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "AI agent framework adapters for Chronary calendar tools",
   "license": "Apache-2.0",
   "type": "module",
@@ -70,6 +70,9 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "files": [
     "dist",
     "README.md",
