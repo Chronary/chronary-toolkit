@@ -5,7 +5,7 @@ import type { ToolDefinition, ChronaryToolkitConfig } from '../src/types';
 
 // Mock @chronary/sdk to avoid needing a real API key
 vi.mock('@chronary/sdk', () => ({
-  Chronary: vi.fn().mockImplementation(() => ({})),
+  Chronary: class { constructor(_config?: unknown) {} },
 }));
 
 class TestListToolkit extends ListToolkit<string> {
@@ -16,7 +16,7 @@ class TestMapToolkit extends MapToolkit<string> {
   protected buildTool(def: ToolDefinition): string { return def.name; }
 }
 
-const config: ChronaryToolkitConfig = { apiKey: 'chr_sk_test123' };
+const config: ChronaryToolkitConfig = { apiKey: 'chr_sk_xxx123' };
 
 describe('TOOL_DEFINITIONS', () => {
   it('has exactly 23 entries', () => {

@@ -50,9 +50,7 @@ describe('schemas', () => {
   describe('no schema uses .refine(), .transform(), or .default()', () => {
     for (const [name, schema] of Object.entries(ALL_SCHEMAS)) {
       it(name, () => {
-        // ZodObject with refinements has _def.effects
-        const def = (schema as z.ZodTypeAny)._def;
-        expect(def.typeName, `${name} should be a ZodObject`).toBe('ZodObject');
+        expect(schema instanceof z.ZodObject, `${name} should be a ZodObject`).toBe(true);
       });
     }
   });

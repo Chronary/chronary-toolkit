@@ -1,5 +1,4 @@
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import type { ZodRawShape } from 'zod';
+import { z, type ZodRawShape } from 'zod';
 import { ListToolkit } from '../base';
 import type { ToolDefinition, ChronaryToolkitConfig, ToolResult, ToolAnnotations } from '../types';
 
@@ -59,7 +58,7 @@ export class ChronaryToolkit extends ListToolkit<McpToolDefinition> {
     return {
       name: def.name,
       description: def.description,
-      inputSchema: zodToJsonSchema(def.schema, { target: 'openApi3' }),
+      inputSchema: z.toJSONSchema(def.schema) as Record<string, unknown>,
       annotations: { ...def.annotations },
     };
   }

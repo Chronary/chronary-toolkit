@@ -17,14 +17,16 @@ export const CreateCalendarSchema = z.object({
   name: z.string().describe('Calendar name'),
   timezone: z.string().describe('IANA timezone (e.g., "America/New_York")'),
   agent_id: z.string().optional().describe('Agent ID to associate the calendar with'),
-  metadata: z.record(z.unknown()).optional().describe('Arbitrary key-value metadata'),
+  default_reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('Default reminder offsets in minutes before start, inherited by events that don\'t set their own (e.g. [10, 1440]). null/omit = system default (10 min); [] = no reminders. Max 5, each 1–40320.'),
+  metadata: z.record(z.string(), z.unknown()).optional().describe('Arbitrary key-value metadata'),
 });
 
 export const UpdateCalendarSchema = z.object({
   calendar_id: z.string().describe('The calendar ID to update'),
   name: z.string().optional().describe('New calendar name'),
   timezone: z.string().optional().describe('New IANA timezone'),
-  metadata: z.record(z.unknown()).optional().describe('Updated metadata'),
+  default_reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('New default reminder offsets in minutes before start. null = system default (10 min); [] = no reminders. Max 5, each 1–40320.'),
+  metadata: z.record(z.string(), z.unknown()).optional().describe('Updated metadata'),
 });
 
 export const DeleteCalendarSchema = z.object({
@@ -57,7 +59,8 @@ export const CreateEventSchema = z.object({
   description: z.string().optional().describe('Event description'),
   all_day: z.boolean().optional().describe('Whether this is an all-day event'),
   status: z.enum(['confirmed', 'tentative', 'cancelled']).optional().describe('Event status (default "confirmed")'),
-  metadata: z.record(z.unknown()).optional().describe('Arbitrary key-value metadata'),
+  reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('Reminder offsets in minutes before start (e.g. [10, 1440]). Each fires an event.reminder webhook. null/omit = inherit calendar default (then 10 min); [] = no reminders. Max 5, each 1–40320.'),
+  metadata: z.record(z.string(), z.unknown()).optional().describe('Arbitrary key-value metadata'),
 });
 
 export const UpdateEventSchema = z.object({
@@ -69,7 +72,8 @@ export const UpdateEventSchema = z.object({
   end_time: z.string().optional().describe('New end time in ISO 8601 format'),
   all_day: z.boolean().optional().describe('Whether this is an all-day event'),
   status: z.enum(['confirmed', 'tentative', 'cancelled']).optional().describe('New event status'),
-  metadata: z.record(z.unknown()).optional().describe('Updated metadata'),
+  reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('New reminder offsets in minutes before start. null = inherit calendar default; [] = no reminders. Max 5, each 1–40320.'),
+  metadata: z.record(z.string(), z.unknown()).optional().describe('Updated metadata'),
 });
 
 export const DeleteEventSchema = z.object({

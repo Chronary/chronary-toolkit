@@ -32,19 +32,20 @@ export const getCalendar = safeFunc(async (ctx: Ctx<{ calendar_id: string }>) =>
 });
 
 export const createCalendar = safeFunc(async (ctx: Ctx<{
-  name: string; timezone: string; agent_id?: string; metadata?: Record<string, unknown>;
+  name: string; timezone: string; agent_id?: string; default_reminders?: number[] | null; metadata?: Record<string, unknown>;
 }>) => {
   const { client, params } = ctx;
   return client.calendars.create({
     name: params.name,
     timezone: params.timezone,
     agentId: params.agent_id,
+    default_reminders: params.default_reminders,
     metadata: params.metadata,
   });
 });
 
 export const updateCalendar = safeFunc(async (ctx: Ctx<{
-  calendar_id: string; name?: string; timezone?: string; metadata?: Record<string, unknown>;
+  calendar_id: string; name?: string; timezone?: string; default_reminders?: number[] | null; metadata?: Record<string, unknown>;
 }>) => {
   const { client, params } = ctx;
   const { calendar_id, ...updates } = params;
@@ -83,7 +84,7 @@ export const getEvent = safeFunc(async (ctx: Ctx<{ calendar_id: string; event_id
 export const createEvent = safeFunc(async (ctx: Ctx<{
   calendar_id: string; title: string; start_time: string; end_time: string;
   description?: string; all_day?: boolean;
-  status?: 'confirmed' | 'tentative' | 'cancelled'; metadata?: Record<string, unknown>;
+  status?: 'confirmed' | 'tentative' | 'cancelled'; reminders?: number[] | null; metadata?: Record<string, unknown>;
 }>) => {
   const { client, params } = ctx;
   const { calendar_id, ...eventParams } = params;
@@ -93,7 +94,7 @@ export const createEvent = safeFunc(async (ctx: Ctx<{
 export const updateEvent = safeFunc(async (ctx: Ctx<{
   calendar_id: string; event_id: string; title?: string; description?: string | null;
   start_time?: string; end_time?: string; all_day?: boolean;
-  status?: 'confirmed' | 'tentative' | 'cancelled'; metadata?: Record<string, unknown>;
+  status?: 'confirmed' | 'tentative' | 'cancelled'; reminders?: number[] | null; metadata?: Record<string, unknown>;
 }>) => {
   const { client, params } = ctx;
   const { calendar_id, event_id, ...updates } = params;

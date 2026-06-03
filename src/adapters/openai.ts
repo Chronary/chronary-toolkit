@@ -1,4 +1,4 @@
-import { zodToJsonSchema } from 'zod-to-json-schema';
+import { z } from 'zod';
 import { ListToolkit } from '../base';
 import type { ToolDefinition, ChronaryToolkitConfig, ToolResult } from '../types';
 
@@ -56,7 +56,7 @@ export class ChronaryToolkit extends ListToolkit<ChatCompletionTool> {
       function: {
         name: def.name,
         description: def.description,
-        parameters: zodToJsonSchema(def.schema, { target: 'openApi3' }),
+        parameters: z.toJSONSchema(def.schema) as Record<string, unknown>,
       },
     };
   }
@@ -67,7 +67,7 @@ export class ChronaryToolkit extends ListToolkit<ChatCompletionTool> {
       type: 'function' as const,
       name: def.name,
       description: def.description,
-      parameters: zodToJsonSchema(def.schema, { target: 'openApi3' }),
+      parameters: z.toJSONSchema(def.schema) as Record<string, unknown>,
     }));
   }
 

@@ -2,10 +2,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { ChronaryToolkit } from '../../src/adapters/mcp';
 
 vi.mock('@chronary/sdk', () => ({
-  Chronary: vi.fn().mockImplementation(() => ({})),
+  Chronary: class { constructor(_config?: unknown) {} },
 }));
 
-const config = { apiKey: 'chr_sk_test123' };
+const config = { apiKey: 'chr_sk_xxx123' };
 
 describe('MCP adapter', () => {
   it('returns array of MCP tool definitions', () => {

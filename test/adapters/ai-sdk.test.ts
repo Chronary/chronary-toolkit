@@ -2,10 +2,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { ChronaryToolkit, chronaryTools } from '../../src/adapters/ai-sdk';
 
 vi.mock('@chronary/sdk', () => ({
-  Chronary: vi.fn().mockImplementation(() => ({})),
+  Chronary: class { constructor(_config?: unknown) {} },
 }));
 
-const config = { apiKey: 'chr_sk_test123' };
+const config = { apiKey: 'chr_sk_xxx123' };
 
 describe('AI SDK adapter', () => {
   it('returns Record<string, Tool> with all 23 tools', () => {
