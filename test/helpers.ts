@@ -8,12 +8,23 @@ export function mockChronaryClient() {
   });
 
   return {
+    agents: {
+      list: vi.fn().mockReturnValue(mockPage()),
+      get: vi.fn().mockResolvedValue(FIXTURES.agent),
+      create: vi.fn().mockResolvedValue(FIXTURES.agent),
+      update: vi.fn().mockResolvedValue(FIXTURES.agent),
+      delete: vi.fn().mockResolvedValue(undefined),
+    },
     calendars: {
       list: vi.fn().mockReturnValue(mockPage()),
       get: vi.fn().mockResolvedValue(FIXTURES.calendar),
       create: vi.fn().mockResolvedValue(FIXTURES.calendar),
       update: vi.fn().mockResolvedValue(FIXTURES.calendar),
       delete: vi.fn().mockResolvedValue(undefined),
+      getContext: vi.fn().mockResolvedValue(FIXTURES.calendarContext),
+      setAvailabilityRules: vi.fn().mockResolvedValue(FIXTURES.availabilityRules),
+      getAvailabilityRules: vi.fn().mockResolvedValue(FIXTURES.availabilityRules),
+      deleteAvailabilityRules: vi.fn().mockResolvedValue(undefined),
     },
     events: {
       list: vi.fn().mockReturnValue(mockPage()),
@@ -21,9 +32,21 @@ export function mockChronaryClient() {
       create: vi.fn().mockResolvedValue(FIXTURES.event),
       update: vi.fn().mockResolvedValue(FIXTURES.event),
       delete: vi.fn().mockResolvedValue(undefined),
+      confirm: vi.fn().mockResolvedValue(FIXTURES.event),
+      release: vi.fn().mockResolvedValue(FIXTURES.event),
     },
     availability: {
+      forAgent: vi.fn().mockResolvedValue(FIXTURES.availability),
+      forCalendar: vi.fn().mockResolvedValue(FIXTURES.availability),
       check: vi.fn().mockResolvedValue(FIXTURES.availability),
+    },
+    scheduling: {
+      list: vi.fn().mockReturnValue(mockPage()),
+      get: vi.fn().mockResolvedValue(FIXTURES.proposal),
+      create: vi.fn().mockResolvedValue(FIXTURES.proposal),
+      respond: vi.fn().mockResolvedValue(FIXTURES.proposalResponse),
+      resolve: vi.fn().mockResolvedValue({ status: 'confirmed', resolved_slot: { start_time: '2026-04-15T10:00:00Z', end_time: '2026-04-15T10:30:00Z' } }),
+      cancel: vi.fn().mockResolvedValue({ status: 'cancelled' }),
     },
     webhooks: {
       list: vi.fn().mockReturnValue(mockPage()),
@@ -31,6 +54,7 @@ export function mockChronaryClient() {
       create: vi.fn().mockResolvedValue(FIXTURES.webhook),
       update: vi.fn().mockResolvedValue(FIXTURES.webhook),
       delete: vi.fn().mockResolvedValue(undefined),
+      listDeliveries: vi.fn().mockResolvedValue(FIXTURES.webhookDeliveries),
     },
     icalSubscriptions: {
       list: vi.fn().mockReturnValue(mockPage()),
@@ -40,6 +64,17 @@ export function mockChronaryClient() {
       delete: vi.fn().mockResolvedValue(undefined),
       sync: vi.fn().mockResolvedValue({ status: 'syncing' }),
     },
+    keys: {
+      list: vi.fn().mockResolvedValue([FIXTURES.scopedKey]),
+      create: vi.fn().mockResolvedValue({ ...FIXTURES.scopedKey, key: 'chr_ak_secret' }),
+      delete: vi.fn().mockResolvedValue(undefined),
+    },
+    auditLog: {
+      list: vi.fn().mockResolvedValue(FIXTURES.auditLog),
+    },
+    terms: {
+      accept: vi.fn().mockResolvedValue({ accepted_terms_version: 'v1', accepted_terms_at: '2026-04-01T00:00:00Z' }),
+    },
     usage: {
       get: vi.fn().mockResolvedValue(FIXTURES.usage),
     },
@@ -47,6 +82,82 @@ export function mockChronaryClient() {
 }
 
 export const FIXTURES = {
+  agent: {
+    id: 'agt_abc123',
+    orgId: 'org_1',
+    name: 'Scheduler Bot',
+    type: 'ai',
+    description: null,
+    status: 'active',
+    metadata: {},
+    createdAt: '2026-04-01T00:00:00Z',
+    updatedAt: '2026-04-01T00:00:00Z',
+  },
+  calendarContext: {
+    calendar_id: 'cal_abc123',
+    now: '2026-04-15T09:15:00Z',
+    agent_status: 'working',
+    current_event: null,
+    next_event: null,
+    recent_events: [],
+    upcoming: [],
+  },
+  availabilityRules: {
+    id: 'avr_abc123',
+    calendar_id: 'cal_abc123',
+    buffer_before_minutes: 0,
+    buffer_after_minutes: 0,
+    working_hours: null,
+    timezone: 'UTC',
+    created_at: '2026-04-01T00:00:00Z',
+    updated_at: '2026-04-01T00:00:00Z',
+  },
+  proposal: {
+    id: 'prop_abc123',
+    title: 'Sync',
+    description: null,
+    organizer_agent_id: 'agt_abc123',
+    participant_agent_ids: ['agt_def456'],
+    calendar_id: 'cal_abc123',
+    status: 'pending',
+    expires_at: null,
+    resolved_slot: null,
+    created_event_id: null,
+    metadata: {},
+    slots: [],
+    responses: [],
+    created_at: '2026-04-01T00:00:00Z',
+    updated_at: '2026-04-01T00:00:00Z',
+  },
+  proposalResponse: {
+    id: 'pr_abc123',
+    agent_id: 'agt_def456',
+    response: 'accept',
+    selected_slot_id: 'slot_1',
+    counter_slots: null,
+    message: null,
+    created_at: '2026-04-01T00:00:00Z',
+  },
+  webhookDeliveries: {
+    data: [],
+    total: 0,
+    limit: 20,
+    offset: 0,
+    stats: { pending: 0, delivered: 0, failed: 0 },
+  },
+  scopedKey: {
+    id: 'key_abc123',
+    key_prefix: 'chr_ak_abc',
+    agent_id: 'agt_abc123',
+    label: 'CI key',
+    created_at: '2026-04-01T00:00:00Z',
+  },
+  auditLog: {
+    data: [],
+    pagination: { next_cursor: null },
+    retention_days: 30,
+    range_clamped: false,
+  },
   calendar: {
     id: 'cal_abc123',
     orgId: 'org_1',

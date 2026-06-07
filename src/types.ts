@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import type { Chronary } from '@chronary/sdk';
 
-/** All 23 tool names exposed by the toolkit */
+/** All 47 tool names exposed by the toolkit (tool-for-tool parity with the hosted MCP server) */
 export type ToolName =
   | 'list_calendars'
   | 'get_calendar'
@@ -12,19 +12,43 @@ export type ToolName =
   | 'get_event'
   | 'create_event'
   | 'update_event'
-  | 'delete_event'
-  | 'check_availability'
+  | 'cancel_event'
+  | 'confirm_event'
+  | 'release_event'
+  | 'create_agent'
+  | 'list_agents'
+  | 'get_agent'
+  | 'update_agent'
+  | 'delete_agent'
+  | 'get_availability'
+  | 'find_meeting_time'
+  | 'get_calendar_context'
+  | 'create_proposal'
+  | 'list_proposals'
+  | 'get_proposal'
+  | 'respond_to_proposal'
+  | 'resolve_proposal'
+  | 'cancel_proposal'
+  | 'set_availability_rules'
+  | 'get_availability_rules'
+  | 'clear_availability_rules'
   | 'list_webhooks'
   | 'get_webhook'
   | 'create_webhook'
   | 'update_webhook'
   | 'delete_webhook'
+  | 'list_webhook_deliveries'
   | 'list_ical_subscriptions'
   | 'get_ical_subscription'
-  | 'create_ical_subscription'
+  | 'subscribe_ical'
   | 'update_ical_subscription'
   | 'delete_ical_subscription'
   | 'sync_ical_subscription'
+  | 'create_scoped_key'
+  | 'list_scoped_keys'
+  | 'revoke_scoped_key'
+  | 'get_audit_log'
+  | 'accept_terms'
   | 'get_usage';
 
 /** All tool names as a runtime array */
@@ -38,19 +62,43 @@ export const TOOL_NAMES: ToolName[] = [
   'get_event',
   'create_event',
   'update_event',
-  'delete_event',
-  'check_availability',
+  'cancel_event',
+  'confirm_event',
+  'release_event',
+  'create_agent',
+  'list_agents',
+  'get_agent',
+  'update_agent',
+  'delete_agent',
+  'get_availability',
+  'find_meeting_time',
+  'get_calendar_context',
+  'create_proposal',
+  'list_proposals',
+  'get_proposal',
+  'respond_to_proposal',
+  'resolve_proposal',
+  'cancel_proposal',
+  'set_availability_rules',
+  'get_availability_rules',
+  'clear_availability_rules',
   'list_webhooks',
   'get_webhook',
   'create_webhook',
   'update_webhook',
   'delete_webhook',
+  'list_webhook_deliveries',
   'list_ical_subscriptions',
   'get_ical_subscription',
-  'create_ical_subscription',
+  'subscribe_ical',
   'update_ical_subscription',
   'delete_ical_subscription',
   'sync_ical_subscription',
+  'create_scoped_key',
+  'list_scoped_keys',
+  'revoke_scoped_key',
+  'get_audit_log',
+  'accept_terms',
   'get_usage',
 ];
 

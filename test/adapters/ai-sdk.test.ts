@@ -8,10 +8,10 @@ vi.mock('@chronary/sdk', () => ({
 const config = { apiKey: 'chr_sk_xxx123' };
 
 describe('AI SDK adapter', () => {
-  it('returns Record<string, Tool> with all 23 tools', () => {
+  it('returns Record<string, Tool> with all 47 tools', () => {
     const toolkit = new ChronaryToolkit(config);
     const tools = toolkit.getTools();
-    expect(Object.keys(tools)).toHaveLength(23);
+    expect(Object.keys(tools)).toHaveLength(47);
   });
 
   it('each tool has description, parameters, and execute', () => {
@@ -33,6 +33,6 @@ describe('AI SDK adapter', () => {
 
   it('chronaryTools convenience function works', () => {
     const tools = chronaryTools(config);
-    expect(Object.keys(tools)).toHaveLength(23);
+    expect(Object.keys(tools)).toHaveLength(47);
   });
 });

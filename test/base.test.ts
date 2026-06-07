@@ -19,8 +19,8 @@ class TestMapToolkit extends MapToolkit<string> {
 const config: ChronaryToolkitConfig = { apiKey: 'chr_sk_xxx123' };
 
 describe('TOOL_DEFINITIONS', () => {
-  it('has exactly 23 entries', () => {
-    expect(TOOL_DEFINITIONS).toHaveLength(23);
+  it('has exactly 47 entries', () => {
+    expect(TOOL_DEFINITIONS).toHaveLength(47);
   });
 
   it('every definition has required fields', () => {
@@ -38,53 +38,35 @@ describe('TOOL_DEFINITIONS', () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
-  it('documents known hosted API MCP parity drift', () => {
-    expect(HOSTED_API_MCP_TOOL_NAMES).toHaveLength(21);
-    expect(TOOLKIT_MCP_PARITY.missingHostedTools).toEqual([
-      'create_agent',
-      'list_agents',
-      'get_availability',
-      'find_meeting_time',
-      'cancel_event',
-      'confirm_event',
-      'release_event',
-      'subscribe_ical',
-      'get_calendar_context',
-      'create_proposal',
-      'list_proposals',
-      'get_proposal',
-      'respond_to_proposal',
-      'resolve_proposal',
-      'cancel_proposal',
-      'set_availability_rules',
-      'get_availability_rules',
-      'clear_availability_rules',
-    ]);
+  it('has exact tool-for-tool parity with the hosted API MCP server', () => {
+    expect(HOSTED_API_MCP_TOOL_NAMES).toHaveLength(47);
+    expect(TOOLKIT_MCP_PARITY.missingHostedTools).toEqual([]);
+    expect(TOOLKIT_MCP_PARITY.toolkitOnlyTools).toEqual([]);
   });
 });
 
 describe('ListToolkit', () => {
-  it('returns all 23 tools as array', () => {
+  it('returns all 47 tools as array', () => {
     const toolkit = new TestListToolkit(config);
     const tools = toolkit.getTools();
-    expect(tools).toHaveLength(23);
+    expect(tools).toHaveLength(47);
     expect(Array.isArray(tools)).toBe(true);
   });
 
   it('filters by tool names', () => {
-    const toolkit = new TestListToolkit({ ...config, tools: ['create_event', 'check_availability'] });
+    const toolkit = new TestListToolkit({ ...config, tools: ['create_event', 'find_meeting_time'] });
     const tools = toolkit.getTools();
     expect(tools).toHaveLength(2);
     expect(tools).toContain('create_event');
-    expect(tools).toContain('check_availability');
+    expect(tools).toContain('find_meeting_time');
   });
 });
 
 describe('MapToolkit', () => {
-  it('returns all 23 tools as record', () => {
+  it('returns all 47 tools as record', () => {
     const toolkit = new TestMapToolkit(config);
     const tools = toolkit.getTools();
-    expect(Object.keys(tools)).toHaveLength(23);
+    expect(Object.keys(tools)).toHaveLength(47);
     expect(tools['create_event']).toBe('create_event');
   });
 

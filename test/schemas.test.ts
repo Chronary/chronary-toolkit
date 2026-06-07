@@ -12,25 +12,49 @@ const ALL_SCHEMAS = {
   GetEventSchema: schemas.GetEventSchema,
   CreateEventSchema: schemas.CreateEventSchema,
   UpdateEventSchema: schemas.UpdateEventSchema,
-  DeleteEventSchema: schemas.DeleteEventSchema,
-  CheckAvailabilitySchema: schemas.CheckAvailabilitySchema,
+  CancelEventSchema: schemas.CancelEventSchema,
+  ConfirmEventSchema: schemas.ConfirmEventSchema,
+  ReleaseEventSchema: schemas.ReleaseEventSchema,
+  CreateAgentSchema: schemas.CreateAgentSchema,
+  ListAgentsSchema: schemas.ListAgentsSchema,
+  GetAgentSchema: schemas.GetAgentSchema,
+  UpdateAgentSchema: schemas.UpdateAgentSchema,
+  DeleteAgentSchema: schemas.DeleteAgentSchema,
+  GetAvailabilitySchema: schemas.GetAvailabilitySchema,
+  FindMeetingTimeSchema: schemas.FindMeetingTimeSchema,
+  GetCalendarContextSchema: schemas.GetCalendarContextSchema,
+  CreateProposalSchema: schemas.CreateProposalSchema,
+  ListProposalsSchema: schemas.ListProposalsSchema,
+  GetProposalSchema: schemas.GetProposalSchema,
+  RespondToProposalSchema: schemas.RespondToProposalSchema,
+  ResolveProposalSchema: schemas.ResolveProposalSchema,
+  CancelProposalSchema: schemas.CancelProposalSchema,
+  SetAvailabilityRulesSchema: schemas.SetAvailabilityRulesSchema,
+  GetAvailabilityRulesSchema: schemas.GetAvailabilityRulesSchema,
+  ClearAvailabilityRulesSchema: schemas.ClearAvailabilityRulesSchema,
   ListWebhooksSchema: schemas.ListWebhooksSchema,
   GetWebhookSchema: schemas.GetWebhookSchema,
   CreateWebhookSchema: schemas.CreateWebhookSchema,
   UpdateWebhookSchema: schemas.UpdateWebhookSchema,
   DeleteWebhookSchema: schemas.DeleteWebhookSchema,
+  ListWebhookDeliveriesSchema: schemas.ListWebhookDeliveriesSchema,
   ListICalSubscriptionsSchema: schemas.ListICalSubscriptionsSchema,
   GetICalSubscriptionSchema: schemas.GetICalSubscriptionSchema,
-  CreateICalSubscriptionSchema: schemas.CreateICalSubscriptionSchema,
+  SubscribeICalSchema: schemas.SubscribeICalSchema,
   UpdateICalSubscriptionSchema: schemas.UpdateICalSubscriptionSchema,
   DeleteICalSubscriptionSchema: schemas.DeleteICalSubscriptionSchema,
   SyncICalSubscriptionSchema: schemas.SyncICalSubscriptionSchema,
+  CreateScopedKeySchema: schemas.CreateScopedKeySchema,
+  ListScopedKeysSchema: schemas.ListScopedKeysSchema,
+  RevokeScopedKeySchema: schemas.RevokeScopedKeySchema,
+  GetAuditLogSchema: schemas.GetAuditLogSchema,
+  AcceptTermsSchema: schemas.AcceptTermsSchema,
   GetUsageSchema: schemas.GetUsageSchema,
 };
 
 describe('schemas', () => {
-  it('exports exactly 23 schemas', () => {
-    expect(Object.keys(ALL_SCHEMAS)).toHaveLength(23);
+  it('exports exactly 47 schemas', () => {
+    expect(Object.keys(ALL_SCHEMAS)).toHaveLength(47);
   });
 
   describe('every field has a .describe() annotation', () => {
@@ -79,8 +103,8 @@ describe('schemas', () => {
       expect(result.success).toBe(true);
     });
 
-    it('CheckAvailabilitySchema requires at least one agent', () => {
-      const result = schemas.CheckAvailabilitySchema.safeParse({
+    it('FindMeetingTimeSchema requires at least one agent', () => {
+      const result = schemas.FindMeetingTimeSchema.safeParse({
         agents: [],
         start: '2026-04-15T00:00:00Z',
         end: '2026-04-16T00:00:00Z',
@@ -98,8 +122,8 @@ describe('schemas', () => {
       expect(result.success).toBe(true);
     });
 
-    it('CreateICalSubscriptionSchema requires agent_id, calendar_id, and url', () => {
-      const result = schemas.CreateICalSubscriptionSchema.safeParse({
+    it('SubscribeICalSchema requires agent_id, calendar_id, and url', () => {
+      const result = schemas.SubscribeICalSchema.safeParse({
         agent_id: 'agt_123',
         calendar_id: 'cal_123',
         url: 'https://example.com/feed.ics',

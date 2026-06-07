@@ -101,19 +101,170 @@ export const updateEvent = safeFunc(async (ctx: Ctx<{
   return client.events.update(calendar_id, event_id, updates);
 });
 
-export const deleteEvent = safeFunc(async (ctx: Ctx<{ calendar_id: string; event_id: string }>) => {
+export const cancelEvent = safeFunc(async (ctx: Ctx<{ calendar_id: string; event_id: string }>) => {
   await ctx.client.events.delete(ctx.params.calendar_id, ctx.params.event_id);
+  return undefined;
+});
+
+export const confirmEvent = safeFunc(async (ctx: Ctx<{ event_id: string }>) => {
+  return ctx.client.events.confirm(ctx.params.event_id);
+});
+
+export const releaseEvent = safeFunc(async (ctx: Ctx<{ event_id: string }>) => {
+  return ctx.client.events.release(ctx.params.event_id);
+});
+
+// ── Agents ─────────────────────────────────────────────────────
+
+export const createAgent = safeFunc(async (ctx: Ctx<{
+  name: string; type: 'ai' | 'human' | 'resource'; description?: string; metadata?: Record<string, unknown>;
+}>) => {
+  return ctx.client.agents.create(ctx.params);
+});
+
+export const listAgents = safeFunc(async (ctx: Ctx<{
+  type?: 'ai' | 'human' | 'resource'; status?: 'active' | 'paused' | 'decommissioned'; limit?: number; offset?: number;
+}>) => {
+  const { client, params } = ctx;
+  const iter = client.agents.list({ type: params.type, status: params.status, limit: params.limit });
+  return fetchPage(iter, params.offset, params.limit);
+});
+
+export const getAgent = safeFunc(async (ctx: Ctx<{ agent_id: string }>) => {
+  return ctx.client.agents.get(ctx.params.agent_id);
+});
+
+export const updateAgent = safeFunc(async (ctx: Ctx<{
+  agent_id: string; name?: string; description?: string | null; metadata?: Record<string, unknown>; status?: 'active' | 'paused';
+}>) => {
+  const { client, params } = ctx;
+  const { agent_id, ...updates } = params;
+  return client.agents.update(agent_id, updates);
+});
+
+export const deleteAgent = safeFunc(async (ctx: Ctx<{ agent_id: string }>) => {
+  await ctx.client.agents.delete(ctx.params.agent_id);
   return undefined;
 });
 
 // ── Availability ───────────────────────────────────────────────
 
-export const checkAvailability = safeFunc(async (ctx: Ctx<{
+export const getAvailability = safeFunc(async (ctx: Ctx<{
+  agent_id: string; start: string; end: string;
+  slot_duration?: '15m' | '30m' | '45m' | '1h' | '2h'; include_busy?: boolean;
+}>) => {
+  const { client, params } = ctx;
+  return client.availability.forAgent(params.agent_id, {
+    start: params.start,
+    end: params.end,
+    slot_duration: params.slot_duration,
+    include_busy: params.include_busy,
+  });
+});
+
+export const findMeetingTime = safeFunc(async (ctx: Ctx<{
   agents: string[]; start: string; end: string;
   slot_duration?: '15m' | '30m' | '45m' | '1h' | '2h';
   calendars?: string[]; include_busy?: boolean;
 }>) => {
   return ctx.client.availability.check(ctx.params);
+});
+
+// ── Calendar context ───────────────────────────────────────────
+
+export const getCalendarContext = safeFunc(async (ctx: Ctx<{ calendar_id: string }>) => {
+  return ctx.client.calendars.getContext(ctx.params.calendar_id);
+});
+
+// ── Scheduling proposals ───────────────────────────────────────
+
+interface ProposalSlotInput {
+  start_time: string;
+  end_time: string;
+  weight?: number;
+  calendar_id?: string;
+}
+
+export const createProposal = safeFunc(async (ctx: Ctx<{
+  title: string; description?: string; organizer_agent_id: string;
+  participant_agent_ids: string[]; calendar_id: string;
+  slots: ProposalSlotInput[]; expires_at?: string;
+}>) => {
+  return ctx.client.scheduling.create(ctx.params);
+});
+
+export const listProposals = safeFunc(async (ctx: Ctx<{
+  status?: 'pending' | 'confirmed' | 'expired' | 'cancelled'; organizer_agent_id?: string; limit?: number; offset?: number;
+}>) => {
+  const { client, params } = ctx;
+  const iter = client.scheduling.list({
+    status: params.status,
+    organizer_agent_id: params.organizer_agent_id,
+    limit: params.limit,
+  });
+  return fetchPage(iter, params.offset, params.limit);
+});
+
+export const getProposal = safeFunc(async (ctx: Ctx<{ proposal_id: string }>) => {
+  return ctx.client.scheduling.get(ctx.params.proposal_id);
+});
+
+export const respondToProposal = safeFunc(async (ctx: Ctx<{
+  proposal_id: string; agent_id: string; response: 'accept' | 'decline' | 'counter';
+  selected_slot_id?: string; counter_slots?: ProposalSlotInput[]; message?: string;
+}>) => {
+  const { client, params } = ctx;
+  const { proposal_id, ...body } = params;
+  return client.scheduling.respond(proposal_id, body);
+});
+
+export const resolveProposal = safeFunc(async (ctx: Ctx<{ proposal_id: string }>) => {
+  return ctx.client.scheduling.resolve(ctx.params.proposal_id);
+});
+
+export const cancelProposal = safeFunc(async (ctx: Ctx<{ proposal_id: string }>) => {
+  return ctx.client.scheduling.cancel(ctx.params.proposal_id);
+});
+
+// ── Availability rules ─────────────────────────────────────────
+
+interface WorkingHoursDayInput { start: string; end: string; }
+type WorkingHoursInput = {
+  mon?: WorkingHoursDayInput; tue?: WorkingHoursDayInput; wed?: WorkingHoursDayInput;
+  thu?: WorkingHoursDayInput; fri?: WorkingHoursDayInput; sat?: WorkingHoursDayInput; sun?: WorkingHoursDayInput;
+} | null;
+
+export const setAvailabilityRules = safeFunc(async (ctx: Ctx<{
+  calendar_id: string; buffer_before_minutes?: number; buffer_after_minutes?: number;
+  working_hours?: WorkingHoursInput; timezone?: string;
+}>) => {
+  const { client, params } = ctx;
+  const { calendar_id, ...rules } = params;
+  return client.calendars.setAvailabilityRules(calendar_id, rules);
+});
+
+export const getAvailabilityRules = safeFunc(async (ctx: Ctx<{ calendar_id: string }>) => {
+  return ctx.client.calendars.getAvailabilityRules(ctx.params.calendar_id);
+});
+
+export const clearAvailabilityRules = safeFunc(async (ctx: Ctx<{ calendar_id: string }>) => {
+  await ctx.client.calendars.deleteAvailabilityRules(ctx.params.calendar_id);
+  return undefined;
+});
+
+// ── Scoped keys ────────────────────────────────────────────────
+
+export const createScopedKey = safeFunc(async (ctx: Ctx<{ agent_id: string; label?: string }>) => {
+  return ctx.client.keys.create(ctx.params);
+});
+
+export const listScopedKeys = safeFunc(async (ctx: Ctx) => {
+  return ctx.client.keys.list();
+});
+
+export const revokeScopedKey = safeFunc(async (ctx: Ctx<{ key_id: string }>) => {
+  await ctx.client.keys.delete(ctx.params.key_id);
+  return undefined;
 });
 
 // ── Webhooks ───────────────────────────────────────────────────
@@ -145,6 +296,29 @@ export const deleteWebhook = safeFunc(async (ctx: Ctx<{ webhook_id: string }>) =
   return undefined;
 });
 
+export const listWebhookDeliveries = safeFunc(async (ctx: Ctx<{
+  webhook_id: string; limit?: number; offset?: number;
+  status?: 'pending' | 'delivered' | 'failed'; include_payload?: boolean;
+}>) => {
+  const { client, params } = ctx;
+  const { webhook_id, ...query } = params;
+  return client.webhooks.listDeliveries(webhook_id, query);
+});
+
+// ── Audit log ──────────────────────────────────────────────────
+
+export const getAuditLog = safeFunc(async (ctx: Ctx<{
+  from?: string; to?: string; action?: string; actor_key_prefix?: string; cursor?: string; limit?: number;
+}>) => {
+  return ctx.client.auditLog.list(ctx.params);
+});
+
+// ── Terms ──────────────────────────────────────────────────────
+
+export const acceptTerms = safeFunc(async (ctx: Ctx<{ tos_version: string }>) => {
+  return ctx.client.terms.accept(ctx.params);
+});
+
 // ── iCal Subscriptions ─────────────────────────────────────────
 
 export const listICalSubscriptions = safeFunc(async (ctx: Ctx<{
@@ -163,7 +337,7 @@ export const getICalSubscription = safeFunc(async (ctx: Ctx<{ subscription_id: s
   return ctx.client.icalSubscriptions.get(ctx.params.subscription_id);
 });
 
-export const createICalSubscription = safeFunc(async (ctx: Ctx<{
+export const subscribeICal = safeFunc(async (ctx: Ctx<{
   agent_id: string; calendar_id: string; url: string; label?: string;
 }>) => {
   const { client, params } = ctx;

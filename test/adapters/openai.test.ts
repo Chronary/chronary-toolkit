@@ -11,7 +11,7 @@ describe('OpenAI adapter', () => {
   it('returns ChatCompletionTool[] format', () => {
     const toolkit = new ChronaryToolkit(config);
     const tools = toolkit.getTools();
-    expect(tools).toHaveLength(23);
+    expect(tools).toHaveLength(47);
     for (const tool of tools) {
       expect(tool.type).toBe('function');
       expect(tool.function.name).toBeTruthy();
@@ -23,7 +23,7 @@ describe('OpenAI adapter', () => {
   it('toResponsesTools returns flatter format', () => {
     const toolkit = new ChronaryToolkit(config);
     const tools = toolkit.toResponsesTools();
-    expect(tools).toHaveLength(23);
+    expect(tools).toHaveLength(47);
     for (const tool of tools) {
       expect(tool.type).toBe('function');
       expect(tool.name).toBeTruthy();
@@ -38,7 +38,7 @@ describe('OpenAI adapter', () => {
   });
 
   it('supports selective tool loading', () => {
-    const toolkit = new ChronaryToolkit({ ...config, tools: ['check_availability'] });
+    const toolkit = new ChronaryToolkit({ ...config, tools: ['find_meeting_time'] });
     expect(toolkit.getTools()).toHaveLength(1);
     expect(toolkit.toResponsesTools()).toHaveLength(1);
   });

@@ -11,7 +11,7 @@ describe('MCP adapter', () => {
   it('returns array of MCP tool definitions', () => {
     const toolkit = new ChronaryToolkit(config);
     const tools = toolkit.getTools();
-    expect(tools).toHaveLength(23);
+    expect(tools).toHaveLength(47);
   });
 
   it('each tool has name, description, inputSchema, and annotations', () => {
@@ -37,7 +37,7 @@ describe('MCP adapter', () => {
     const toolkit = new ChronaryToolkit(config);
     const mockServer = { registerTool: vi.fn() };
     toolkit.registerAll(mockServer);
-    expect(mockServer.registerTool).toHaveBeenCalledTimes(23);
+    expect(mockServer.registerTool).toHaveBeenCalledTimes(47);
     expect(mockServer.registerTool.mock.calls[0][0]).toBeTruthy(); // first arg is name
   });
 
@@ -67,7 +67,7 @@ describe('MCP adapter', () => {
   });
 
   it('registerAll delivers read-only annotations for list/get tools', () => {
-    const toolkit = new ChronaryToolkit({ ...config, tools: ['list_calendars', 'check_availability'] });
+    const toolkit = new ChronaryToolkit({ ...config, tools: ['list_calendars', 'find_meeting_time'] });
     const mockServer = { registerTool: vi.fn() };
     toolkit.registerAll(mockServer);
     for (const call of mockServer.registerTool.mock.calls) {
