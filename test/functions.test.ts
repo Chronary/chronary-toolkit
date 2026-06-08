@@ -36,6 +36,11 @@ describe('tool functions', () => {
     expect(client.calendars.update).toHaveBeenCalledWith('cal_1', expect.objectContaining({ name: 'New' }));
   });
 
+  it('updateCalendar forwards agent_status', async () => {
+    await fns.updateCalendar({ client: asClient(), params: { calendar_id: 'cal_1', agent_status: 'working' } });
+    expect(client.calendars.update).toHaveBeenCalledWith('cal_1', expect.objectContaining({ agent_status: 'working' }));
+  });
+
   it('deleteCalendar returns success', async () => {
     const result = await fns.deleteCalendar({ client: asClient(), params: { calendar_id: 'cal_1' } });
     expect(result).toEqual({ result: { success: true }, isError: false });
@@ -49,6 +54,25 @@ describe('tool functions', () => {
       calendar_id: 'cal_1', title: 'Meeting', start_time: '2026-04-15T09:00:00Z', end_time: '2026-04-15T10:00:00Z',
     } });
     expect(client.events.create).toHaveBeenCalledWith('cal_1', expect.objectContaining({ title: 'Meeting' }));
+  });
+
+  it('createEvent forwards hold fields (status/hold_expires_at/hold_priority)', async () => {
+    await fns.createEvent({ client: asClient(), params: {
+      calendar_id: 'cal_1', title: 'Hold', start_time: '2026-04-15T09:00:00Z', end_time: '2026-04-15T10:00:00Z',
+      status: 'hold', hold_expires_at: '2026-04-15T08:50:00Z', hold_priority: 5,
+    } });
+    expect(client.events.create).toHaveBeenCalledWith('cal_1', expect.objectContaining({
+      status: 'hold', hold_expires_at: '2026-04-15T08:50:00Z', hold_priority: 5,
+    }));
+  });
+
+  it('listEvents passes only calendar-scoped filters to events.list', async () => {
+    await fns.listEvents({ client: asClient(), params: {
+      calendar_id: 'cal_1', start_after: '2026-04-15T00:00:00Z', limit: 10,
+    } });
+    expect(client.events.list).toHaveBeenCalledWith(expect.objectContaining({
+      calendarId: 'cal_1', start_after: '2026-04-15T00:00:00Z',
+    }));
   });
 
   it('getEvent passes calendar_id and event_id', async () => {
@@ -112,11 +136,43 @@ describe('tool functions', () => {
     expect(client.availability.forAgent).toHaveBeenCalledWith('agt_1', expect.objectContaining({ start: '2026-04-15T00:00:00Z' }));
   });
 
+  it('getAvailability resolves start_time/end_time aliases to start/end', async () => {
+    await fns.getAvailability({ client: asClient(), params: {
+      agent_id: 'agt_1', start_time: '2026-04-15T00:00:00Z', end_time: '2026-04-16T00:00:00Z',
+    } });
+    expect(client.availability.forAgent).toHaveBeenCalledWith('agt_1', expect.objectContaining({
+      start: '2026-04-15T00:00:00Z', end: '2026-04-16T00:00:00Z',
+    }));
+  });
+
+  it('getAvailability errors when neither start nor start_time is provided', async () => {
+    const result = await fns.getAvailability({ client: asClient(), params: { agent_id: 'agt_1' } });
+    expect(result.isError).toBe(true);
+    expect(client.availability.forAgent).not.toHaveBeenCalled();
+  });
+
   it('findMeetingTime passes params through', async () => {
     await fns.findMeetingTime({ client: asClient(), params: {
       agents: ['agt_1'], start: '2026-04-15T00:00:00Z', end: '2026-04-16T00:00:00Z',
     } });
     expect(client.availability.check).toHaveBeenCalledWith(expect.objectContaining({ agents: ['agt_1'] }));
+  });
+
+  it('findMeetingTime resolves agent_ids/start_time/end_time aliases', async () => {
+    await fns.findMeetingTime({ client: asClient(), params: {
+      agent_ids: ['agt_1', 'agt_2'], start_time: '2026-04-15T00:00:00Z', end_time: '2026-04-16T00:00:00Z',
+    } });
+    expect(client.availability.check).toHaveBeenCalledWith(expect.objectContaining({
+      agents: ['agt_1', 'agt_2'], start: '2026-04-15T00:00:00Z', end: '2026-04-16T00:00:00Z',
+    }));
+  });
+
+  it('findMeetingTime errors when agents/agent_ids is missing', async () => {
+    const result = await fns.findMeetingTime({ client: asClient(), params: {
+      start: '2026-04-15T00:00:00Z', end: '2026-04-16T00:00:00Z',
+    } });
+    expect(result.isError).toBe(true);
+    expect(client.availability.check).not.toHaveBeenCalled();
   });
 
   // ── Calendar context ──

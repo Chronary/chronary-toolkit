@@ -1,84 +1,107 @@
 import { z } from 'zod';
 
+// Webhook event types and delivery statuses — kept in lockstep with the hosted
+// MCP server's `@chronary/shared` WEBHOOK_EVENT_TYPES / WEBHOOK_DELIVERY_STATUSES.
+// Inlined here because the toolkit deliberately does not depend on @chronary/shared.
+const WEBHOOK_EVENT_TYPES = [
+  'agent.created',
+  'agent.updated',
+  'event.created',
+  'event.updated',
+  'event.deleted',
+  'event.started',
+  'event.ended',
+  'event.reminder',
+  'event.hold_created',
+  'event.hold_expired',
+  'event.hold_released',
+  'event.hold_confirmed',
+  'proposal.created',
+  'proposal.responded',
+  'proposal.confirmed',
+  'proposal.expired',
+  'proposal.cancelled',
+  'webhook.deactivated',
+] as const;
+
+const WEBHOOK_DELIVERY_STATUSES = ['pending', 'delivered', 'failed'] as const;
+
 // ── Calendars ──────────────────────────────────────────────────
 
 export const ListCalendarsSchema = z.object({
-  agent_id: z.string().optional().describe('Filter calendars by agent ID'),
-  include: z.enum(['all']).optional().describe('Set to "all" to include soft-deleted calendars'),
-  limit: z.number().int().min(1).max(200).optional().describe('Max results per page (default 50)'),
-  offset: z.number().int().min(0).optional().describe('Pagination offset (default 0)'),
+  include: z.enum(['all']).optional().describe('Pass "all" to include calendars across all agents (org keys only)'),
+  limit: z.number().int().min(1).max(200).default(50).describe('Max results to return'),
+  offset: z.number().int().min(0).default(0).describe('Pagination offset'),
 });
 
 export const GetCalendarSchema = z.object({
-  calendar_id: z.string().describe('The calendar ID to retrieve'),
+  calendar_id: z.string().describe('Calendar ID to fetch'),
 });
 
 export const CreateCalendarSchema = z.object({
-  name: z.string().describe('Calendar name'),
-  timezone: z.string().describe('IANA timezone (e.g., "America/New_York")'),
-  agent_id: z.string().optional().describe('Agent ID to associate the calendar with'),
-  default_reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('Default reminder offsets in minutes before start, inherited by events that don\'t set their own (e.g. [10, 1440]). null/omit = system default (10 min); [] = no reminders. Max 5, each 1–40320.'),
-  metadata: z.record(z.string(), z.unknown()).optional().describe('Arbitrary key-value metadata'),
+  name: z.string().min(1).max(255).describe('Calendar name'),
+  agent_id: z.string().optional().describe('Agent ID to own this calendar (omit for org-level)'),
+  timezone: z.string().min(1).describe('IANA timezone (e.g. America/New_York)'),
+  default_reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('Default reminder offsets in minutes before start, inherited by events on this calendar that don\'t set their own. Omit or null to use the system default (10 min); [] for no reminders.'),
 });
 
 export const UpdateCalendarSchema = z.object({
-  calendar_id: z.string().describe('The calendar ID to update'),
-  name: z.string().optional().describe('New calendar name'),
-  timezone: z.string().optional().describe('New IANA timezone'),
-  default_reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('New default reminder offsets in minutes before start. null = system default (10 min); [] = no reminders. Max 5, each 1–40320.'),
-  metadata: z.record(z.string(), z.unknown()).optional().describe('Updated metadata'),
+  calendar_id: z.string().describe('Calendar ID to update'),
+  name: z.string().min(1).max(255).optional().describe('New calendar name'),
+  timezone: z.string().min(1).optional().describe('New IANA timezone (e.g. America/New_York)'),
+  agent_status: z.enum(['idle', 'working', 'waiting', 'error']).optional().describe('Owning agent\'s status'),
+  default_reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('Default reminder offsets in minutes; null for system default, [] for none'),
+  metadata: z.record(z.string(), z.unknown()).optional().describe('Arbitrary metadata (max 16KB)'),
 });
 
 export const DeleteCalendarSchema = z.object({
-  calendar_id: z.string().describe('The calendar ID to delete'),
+  calendar_id: z.string().describe('Calendar ID to delete'),
 });
 
 // ── Events ─────────────────────────────────────────────────────
 
 export const ListEventsSchema = z.object({
-  calendar_id: z.string().optional().describe('Calendar ID to list events from (provide this or agent_id)'),
-  agent_id: z.string().optional().describe('Agent ID to list events for (provide this or calendar_id)'),
-  start_after: z.string().optional().describe('Only events starting after this ISO 8601 datetime'),
-  start_before: z.string().optional().describe('Only events starting before this ISO 8601 datetime'),
-  status: z.enum(['confirmed', 'tentative', 'cancelled']).optional().describe('Filter by event status'),
-  source: z.enum(['internal', 'external_ical']).optional().describe('Filter by event source'),
-  limit: z.number().int().min(1).max(200).optional().describe('Max results per page (default 50)'),
-  offset: z.number().int().min(0).optional().describe('Pagination offset (default 0)'),
+  calendar_id: z.string().describe('Calendar ID to list events from'),
+  start_after: z.string().datetime().optional().describe('Filter events starting after this time'),
+  start_before: z.string().datetime().optional().describe('Filter events starting before this time'),
+  limit: z.number().int().min(1).max(200).default(50).describe('Max results to return'),
+  offset: z.number().int().min(0).default(0).describe('Pagination offset'),
 });
 
 export const GetEventSchema = z.object({
-  calendar_id: z.string().describe('Calendar ID the event belongs to'),
-  event_id: z.string().describe('The event ID to retrieve'),
+  event_id: z.string().describe('Event ID to retrieve'),
+  calendar_id: z.string().describe('Calendar ID that owns the event. Required — the SDK is calendar-scoped (unlike the hosted MCP, which can resolve the calendar from event_id).'),
 });
 
 export const CreateEventSchema = z.object({
-  calendar_id: z.string().describe('Calendar ID to create the event on'),
-  title: z.string().describe('Event title'),
-  start_time: z.string().describe('Start time in ISO 8601 format'),
-  end_time: z.string().describe('End time in ISO 8601 format'),
-  description: z.string().optional().describe('Event description'),
-  all_day: z.boolean().optional().describe('Whether this is an all-day event'),
-  status: z.enum(['confirmed', 'tentative', 'cancelled']).optional().describe('Event status (default "confirmed")'),
-  reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('Reminder offsets in minutes before start (e.g. [10, 1440]). Each fires an event.reminder webhook. null/omit = inherit calendar default (then 10 min); [] = no reminders. Max 5, each 1–40320.'),
-  metadata: z.record(z.string(), z.unknown()).optional().describe('Arbitrary key-value metadata'),
+  calendar_id: z.string().describe('Calendar ID to add the event to'),
+  title: z.string().min(1).max(500).describe('Event title'),
+  start_time: z.string().datetime().describe('Start time (ISO 8601)'),
+  end_time: z.string().datetime().describe('End time (ISO 8601)'),
+  description: z.string().optional().describe('Optional event description'),
+  all_day: z.boolean().default(false).describe('Whether this is an all-day event'),
+  status: z.enum(['confirmed', 'tentative', 'hold']).optional().describe('Event status. "hold" creates a tentative reservation that auto-expires at hold_expires_at. Defaults to "confirmed".'),
+  reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('Reminder offsets in minutes before start_time (e.g. [10, 1440]). Each fires an event.reminder webhook and shows as an alarm in the iCal feed. Omit or null to inherit the calendar default (then the system default of 10 min); [] for no reminders.'),
+  hold_expires_at: z.string().datetime().optional().describe('Required when status="hold". ISO 8601 timestamp 30s-15min in the future. Auto-releases the hold when reached.'),
+  hold_priority: z.number().int().min(0).max(100).optional().describe('Only valid with status="hold". Higher-priority overlapping holds pre-empt lower-priority ones. Defaults to 0.'),
 });
 
 export const UpdateEventSchema = z.object({
-  calendar_id: z.string().describe('Calendar ID the event belongs to'),
-  event_id: z.string().describe('The event ID to update'),
-  title: z.string().optional().describe('New event title'),
-  description: z.string().nullable().optional().describe('New description (null to clear)'),
-  start_time: z.string().optional().describe('New start time in ISO 8601 format'),
-  end_time: z.string().optional().describe('New end time in ISO 8601 format'),
+  event_id: z.string().describe('Event ID to update'),
+  calendar_id: z.string().describe('Calendar ID that owns the event. Required — the SDK is calendar-scoped (unlike the hosted MCP, which can resolve the calendar from event_id).'),
+  title: z.string().min(1).max(500).optional().describe('New event title'),
+  description: z.string().nullable().optional().describe('New description, or null to clear it'),
+  start_time: z.string().datetime().optional().describe('New start time (ISO 8601)'),
+  end_time: z.string().datetime().optional().describe('New end time (ISO 8601)'),
   all_day: z.boolean().optional().describe('Whether this is an all-day event'),
   status: z.enum(['confirmed', 'tentative', 'cancelled']).optional().describe('New event status'),
-  reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('New reminder offsets in minutes before start. null = inherit calendar default; [] = no reminders. Max 5, each 1–40320.'),
-  metadata: z.record(z.string(), z.unknown()).optional().describe('Updated metadata'),
+  metadata: z.record(z.string(), z.unknown()).optional().describe('Replacement metadata object'),
+  reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('Reminder offsets in minutes before start_time. Omit to leave unchanged, null to inherit the calendar default, [] for no reminders.'),
 });
 
 export const CancelEventSchema = z.object({
-  calendar_id: z.string().describe('Calendar ID that owns the event'),
   event_id: z.string().describe('Event ID to cancel'),
+  calendar_id: z.string().describe('Calendar ID that owns the event. Required — the SDK is calendar-scoped (unlike the hosted MCP, which can resolve the calendar from event_id).'),
 });
 
 export const ConfirmEventSchema = z.object({
@@ -95,14 +118,13 @@ export const CreateAgentSchema = z.object({
   name: z.string().min(1).max(255).describe('Display name for the agent'),
   type: z.enum(['ai', 'human', 'resource']).describe('Agent type'),
   description: z.string().optional().describe('Optional description'),
-  metadata: z.record(z.string(), z.unknown()).optional().describe('Arbitrary key-value metadata'),
 });
 
 export const ListAgentsSchema = z.object({
   type: z.enum(['ai', 'human', 'resource']).optional().describe('Filter by agent type'),
   status: z.enum(['active', 'paused', 'decommissioned']).optional().describe('Filter by status'),
-  limit: z.number().int().min(1).max(200).optional().describe('Max results per page (default 50)'),
-  offset: z.number().int().min(0).optional().describe('Pagination offset (default 0)'),
+  limit: z.number().int().min(1).max(200).default(50).describe('Max results to return'),
+  offset: z.number().int().min(0).default(0).describe('Pagination offset'),
 });
 
 export const GetAgentSchema = z.object({
@@ -125,19 +147,24 @@ export const DeleteAgentSchema = z.object({
 
 export const GetAvailabilitySchema = z.object({
   agent_id: z.string().describe('Agent ID to check availability for'),
-  start: z.string().describe('Range start (ISO 8601)'),
-  end: z.string().describe('Range end (ISO 8601)'),
-  slot_duration: z.enum(['15m', '30m', '45m', '1h', '2h']).optional().describe('Minimum slot duration required (default "30m")'),
-  include_busy: z.boolean().optional().describe('Include busy blocks in response'),
+  start: z.string().datetime().optional().describe('Range start (ISO 8601). Alias: start_time.'),
+  end: z.string().datetime().optional().describe('Range end (ISO 8601). Alias: end_time.'),
+  start_time: z.string().datetime().optional().describe('Alias for `start` (matches REST events naming).'),
+  end_time: z.string().datetime().optional().describe('Alias for `end` (matches REST events naming).'),
+  slot_duration: z.enum(['15m', '30m', '45m', '1h', '2h']).default('30m').describe('Minimum slot duration required — only free blocks at least this long are returned'),
+  include_busy: z.boolean().default(false).describe('Include busy blocks in response'),
 });
 
 export const FindMeetingTimeSchema = z.object({
-  agents: z.array(z.string()).min(1).describe('Array of agent IDs to find common free time for. All agents must be free during the returned slots.'),
-  start: z.string().describe('Search range start (ISO 8601)'),
-  end: z.string().describe('Search range end (ISO 8601)'),
-  slot_duration: z.enum(['15m', '30m', '45m', '1h', '2h']).optional().describe('Minimum slot duration required (default "30m")'),
+  agents: z.array(z.string()).min(1).optional().describe('Array of agent IDs to find common free time for. All agents must be free during the returned slots. Alias: agent_ids.'),
+  agent_ids: z.array(z.string()).min(1).optional().describe('Alias for `agents` (matches REST/scheduling-proposal naming).'),
+  start: z.string().datetime().optional().describe('Search range start (ISO 8601). Alias: start_time.'),
+  end: z.string().datetime().optional().describe('Search range end (ISO 8601). Alias: end_time.'),
+  start_time: z.string().datetime().optional().describe('Alias for `start` (matches REST events naming).'),
+  end_time: z.string().datetime().optional().describe('Alias for `end` (matches REST events naming).'),
+  slot_duration: z.enum(['15m', '30m', '45m', '1h', '2h']).default('30m').describe('Minimum slot duration required — only free blocks at least this long are returned'),
   calendars: z.array(z.string()).optional().describe('Additional shared calendar IDs to treat as busy'),
-  include_busy: z.boolean().optional().describe('Include per-agent busy blocks in response'),
+  include_busy: z.boolean().default(false).describe('Include per-agent busy blocks in response'),
 });
 
 // ── Calendar context ───────────────────────────────────────────
@@ -149,10 +176,10 @@ export const GetCalendarContextSchema = z.object({
 // ── Scheduling proposals ───────────────────────────────────────
 
 const proposalSlotSchema = z.object({
-  start_time: z.string().describe('Slot start (ISO 8601)'),
-  end_time: z.string().describe('Slot end (ISO 8601)'),
-  weight: z.number().min(0).max(10).optional().describe('Preference weight (default 1.0)'),
-  calendar_id: z.string().optional().describe('Override calendar for this slot'),
+  start_time: z.string().datetime(),
+  end_time: z.string().datetime(),
+  weight: z.number().min(0).max(10).default(1.0).optional(),
+  calendar_id: z.string().optional(),
 });
 
 export const CreateProposalSchema = z.object({
@@ -162,7 +189,7 @@ export const CreateProposalSchema = z.object({
   participant_agent_ids: z.array(z.string()).min(1).max(50).describe('Agent IDs invited to respond'),
   calendar_id: z.string().describe('Calendar the resolved event will be created on'),
   slots: z.array(proposalSlotSchema).min(1).max(20).describe('Candidate time slots (up to 20)'),
-  expires_at: z.string().optional().describe('Auto-cancel cutoff if unresolved (ISO 8601)'),
+  expires_at: z.string().datetime().optional().describe('Auto-cancel cutoff if unresolved'),
 });
 
 export const ListProposalsSchema = z.object({
@@ -195,9 +222,11 @@ export const CancelProposalSchema = z.object({
 
 // ── Availability rules ─────────────────────────────────────────
 
+const timeOfDay = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'must be HH:MM in 24-hour time');
+
 const workingHoursDaySchema = z.object({
-  start: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'must be HH:MM in 24-hour time'),
-  end: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'must be HH:MM in 24-hour time'),
+  start: timeOfDay,
+  end: timeOfDay,
 });
 
 const workingHoursSchema = z.object({
@@ -212,10 +241,10 @@ const workingHoursSchema = z.object({
 
 export const SetAvailabilityRulesSchema = z.object({
   calendar_id: z.string().describe('Calendar to configure'),
-  buffer_before_minutes: z.number().int().min(0).max(120).optional().describe('Minutes of buffer before each event (0–120)'),
-  buffer_after_minutes: z.number().int().min(0).max(120).optional().describe('Minutes of buffer after each event (0–120)'),
-  working_hours: workingHoursSchema.optional().describe('Per-day working hours map in the calendar\'s timezone; omit keys for off-days. Pass null to remove any working-hours constraint.'),
-  timezone: z.string().min(1).max(64).optional().describe('IANA timezone used to interpret working_hours (e.g. America/New_York)'),
+  buffer_before_minutes: z.number().int().min(0).max(120).default(0).describe('Minutes of buffer before each event (0–120)'),
+  buffer_after_minutes: z.number().int().min(0).max(120).default(0).describe('Minutes of buffer after each event (0–120)'),
+  working_hours: workingHoursSchema.default(null).describe('Per-day working hours map in the calendar\'s timezone; omit keys for off-days. Pass null to remove any working-hours constraint.'),
+  timezone: z.string().min(1).max(64).default('UTC').describe('IANA timezone used to interpret working_hours (e.g. America/New_York)'),
 });
 
 export const GetAvailabilityRulesSchema = z.object({
@@ -242,8 +271,8 @@ export const RevokeScopedKeySchema = z.object({
 // ── Audit log ──────────────────────────────────────────────────
 
 export const GetAuditLogSchema = z.object({
-  from: z.string().optional().describe('Start of the window (ISO 8601). Silently clamped to the plan retention window if older.'),
-  to: z.string().optional().describe('End of the window (ISO 8601)'),
+  from: z.string().datetime({ offset: true }).optional().describe('Start of the window (ISO 8601). Silently clamped to the plan retention window if older.'),
+  to: z.string().datetime({ offset: true }).optional().describe('End of the window (ISO 8601)'),
   action: z.string().min(1).max(64).optional().describe('Filter by action name (e.g. event.created)'),
   actor_key_prefix: z.string().min(1).max(32).optional().describe('Filter by the API key prefix that performed the action'),
   cursor: z.string().min(1).max(256).optional().describe('Opaque pagination cursor from a previous response'),
@@ -259,41 +288,49 @@ export const AcceptTermsSchema = z.object({
 // ── Webhooks ───────────────────────────────────────────────────
 
 export const ListWebhooksSchema = z.object({
-  limit: z.number().int().min(1).max(100).optional().describe('Max results per page (default 20)'),
-  offset: z.number().int().min(0).optional().describe('Pagination offset (default 0)'),
+  limit: z.number().int().min(1).max(100).default(20).describe('Max results to return'),
+  offset: z.number().int().min(0).default(0).describe('Pagination offset'),
 });
 
 export const GetWebhookSchema = z.object({
-  webhook_id: z.string().describe('The webhook ID to retrieve'),
+  webhook_id: z.string().describe('Webhook subscription to fetch'),
 });
 
 export const CreateWebhookSchema = z.object({
-  url: z.string().describe('HTTPS URL to receive webhook payloads'),
-  events: z.array(z.string()).describe('Event types to subscribe to (e.g., ["event.created", "event.updated"])'),
+  url: z.string().url().describe('HTTPS endpoint that will receive event deliveries'),
+  events: z.array(z.enum(WEBHOOK_EVENT_TYPES)).min(1).describe('Event types to subscribe to'),
 });
 
 export const UpdateWebhookSchema = z.object({
-  webhook_id: z.string().describe('The webhook ID to update'),
-  url: z.string().optional().describe('New webhook URL'),
-  events: z.array(z.string()).optional().describe('New event type subscriptions'),
-  active: z.boolean().optional().describe('Enable or disable the webhook'),
+  webhook_id: z.string().describe('Webhook subscription to update'),
+  url: z.string().url().optional().describe('New HTTPS delivery endpoint'),
+  events: z.array(z.enum(WEBHOOK_EVENT_TYPES)).min(1).optional().describe('Replacement set of event types to subscribe to'),
+  active: z.boolean().optional().describe('Set false to pause deliveries, true to resume'),
 });
 
 export const DeleteWebhookSchema = z.object({
-  webhook_id: z.string().describe('The webhook ID to delete'),
+  webhook_id: z.string().describe('Webhook subscription to delete'),
+});
+
+export const ListWebhookDeliveriesSchema = z.object({
+  webhook_id: z.string().describe('Webhook subscription whose deliveries to list'),
+  limit: z.number().int().min(1).max(100).default(20).describe('Max results to return'),
+  offset: z.number().int().min(0).default(0).describe('Pagination offset'),
+  status: z.enum(WEBHOOK_DELIVERY_STATUSES).optional().describe('Filter to a single delivery status'),
+  include_payload: z.boolean().optional().describe('Include the full event payload sent on each delivery'),
 });
 
 // ── iCal Subscriptions ─────────────────────────────────────────
 
 export const ListICalSubscriptionsSchema = z.object({
-  agent_id: z.string().describe('Agent ID to list subscriptions for'),
+  agent_id: z.string().describe('Agent ID whose iCal subscriptions to list'),
   status: z.enum(['active', 'error', 'paused']).optional().describe('Filter by subscription status'),
-  limit: z.number().int().min(1).max(200).optional().describe('Max results per page (default 50)'),
-  offset: z.number().int().min(0).optional().describe('Pagination offset (default 0)'),
+  limit: z.number().int().min(1).max(200).default(50).describe('Max results to return'),
+  offset: z.number().int().min(0).default(0).describe('Pagination offset'),
 });
 
 export const GetICalSubscriptionSchema = z.object({
-  subscription_id: z.string().describe('The iCal subscription ID to retrieve'),
+  subscription_id: z.string().describe('iCal subscription ID to fetch'),
 });
 
 export const SubscribeICalSchema = z.object({
@@ -303,26 +340,18 @@ export const SubscribeICalSchema = z.object({
   label: z.string().optional().describe('Optional label for this subscription'),
 });
 
-export const ListWebhookDeliveriesSchema = z.object({
-  webhook_id: z.string().describe('Webhook subscription whose deliveries to list'),
-  limit: z.number().int().min(1).max(100).optional().describe('Max results to return (default 20)'),
-  offset: z.number().int().min(0).optional().describe('Pagination offset (default 0)'),
-  status: z.enum(['pending', 'delivered', 'failed']).optional().describe('Filter to a single delivery status'),
-  include_payload: z.boolean().optional().describe('Include the full event payload sent on each delivery'),
-});
-
 export const UpdateICalSubscriptionSchema = z.object({
-  subscription_id: z.string().describe('The iCal subscription ID to update'),
-  label: z.string().optional().describe('New label'),
-  url: z.string().optional().describe('New iCal feed URL'),
+  subscription_id: z.string().describe('iCal subscription ID to update'),
+  label: z.string().min(1).max(255).optional().describe('New label for this subscription'),
+  url: z.string().url().startsWith('https://', 'URL must use HTTPS').optional().describe('New HTTPS URL of the iCal feed (.ics)'),
 });
 
 export const DeleteICalSubscriptionSchema = z.object({
-  subscription_id: z.string().describe('The iCal subscription ID to delete'),
+  subscription_id: z.string().describe('iCal subscription ID to delete'),
 });
 
 export const SyncICalSubscriptionSchema = z.object({
-  subscription_id: z.string().describe('The iCal subscription ID to sync immediately'),
+  subscription_id: z.string().describe('iCal subscription ID to sync'),
 });
 
 // ── Usage ──────────────────────────────────────────────────────

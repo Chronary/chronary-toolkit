@@ -20,10 +20,10 @@ async function fetchPage(
 // ── Calendars ──────────────────────────────────────────────────
 
 export const listCalendars = safeFunc(async (ctx: Ctx<{
-  agent_id?: string; include?: 'all'; limit?: number; offset?: number;
+  include?: 'all'; limit?: number; offset?: number;
 }>) => {
   const { client, params } = ctx;
-  const iter = client.calendars.list({ agentId: params.agent_id, include: params.include, limit: params.limit });
+  const iter = client.calendars.list({ include: params.include, limit: params.limit });
   return fetchPage(iter, params.offset, params.limit);
 });
 
@@ -45,7 +45,9 @@ export const createCalendar = safeFunc(async (ctx: Ctx<{
 });
 
 export const updateCalendar = safeFunc(async (ctx: Ctx<{
-  calendar_id: string; name?: string; timezone?: string; default_reminders?: number[] | null; metadata?: Record<string, unknown>;
+  calendar_id: string; name?: string; timezone?: string;
+  agent_status?: 'idle' | 'working' | 'waiting' | 'error';
+  default_reminders?: number[] | null; metadata?: Record<string, unknown>;
 }>) => {
   const { client, params } = ctx;
   const { calendar_id, ...updates } = params;
@@ -60,18 +62,14 @@ export const deleteCalendar = safeFunc(async (ctx: Ctx<{ calendar_id: string }>)
 // ── Events ─────────────────────────────────────────────────────
 
 export const listEvents = safeFunc(async (ctx: Ctx<{
-  calendar_id?: string; agent_id?: string; start_after?: string; start_before?: string;
-  status?: 'confirmed' | 'tentative' | 'cancelled'; source?: 'internal' | 'external_ical';
+  calendar_id: string; start_after?: string; start_before?: string;
   limit?: number; offset?: number;
 }>) => {
   const { client, params } = ctx;
   const iter = client.events.list({
     calendarId: params.calendar_id,
-    agentId: params.agent_id,
     start_after: params.start_after,
     start_before: params.start_before,
-    status: params.status,
-    source: params.source,
     limit: params.limit,
   });
   return fetchPage(iter, params.offset, params.limit);
@@ -84,7 +82,8 @@ export const getEvent = safeFunc(async (ctx: Ctx<{ calendar_id: string; event_id
 export const createEvent = safeFunc(async (ctx: Ctx<{
   calendar_id: string; title: string; start_time: string; end_time: string;
   description?: string; all_day?: boolean;
-  status?: 'confirmed' | 'tentative' | 'cancelled'; reminders?: number[] | null; metadata?: Record<string, unknown>;
+  status?: 'confirmed' | 'tentative' | 'hold'; reminders?: number[] | null; metadata?: Record<string, unknown>;
+  hold_expires_at?: string; hold_priority?: number;
 }>) => {
   const { client, params } = ctx;
   const { calendar_id, ...eventParams } = params;
@@ -150,24 +149,48 @@ export const deleteAgent = safeFunc(async (ctx: Ctx<{ agent_id: string }>) => {
 // ── Availability ───────────────────────────────────────────────
 
 export const getAvailability = safeFunc(async (ctx: Ctx<{
-  agent_id: string; start: string; end: string;
+  agent_id: string; start?: string; end?: string; start_time?: string; end_time?: string;
   slot_duration?: '15m' | '30m' | '45m' | '1h' | '2h'; include_busy?: boolean;
 }>) => {
   const { client, params } = ctx;
+  // Resolve the `start`/`end` canonical names from their REST aliases, mirroring
+  // the hosted MCP tool's validation.
+  const start = params.start ?? params.start_time;
+  const end = params.end ?? params.end_time;
+  if (!start || !end) {
+    throw new Error('start (or start_time) and end (or end_time) are required');
+  }
   return client.availability.forAgent(params.agent_id, {
-    start: params.start,
-    end: params.end,
+    start,
+    end,
     slot_duration: params.slot_duration,
     include_busy: params.include_busy,
   });
 });
 
 export const findMeetingTime = safeFunc(async (ctx: Ctx<{
-  agents: string[]; start: string; end: string;
+  agents?: string[]; agent_ids?: string[];
+  start?: string; end?: string; start_time?: string; end_time?: string;
   slot_duration?: '15m' | '30m' | '45m' | '1h' | '2h';
   calendars?: string[]; include_busy?: boolean;
 }>) => {
-  return ctx.client.availability.check(ctx.params);
+  const { client, params } = ctx;
+  // Resolve the canonical `agents`/`start`/`end` from their REST/scheduling
+  // aliases, mirroring the hosted MCP tool's validation.
+  const agents = params.agents ?? params.agent_ids;
+  const start = params.start ?? params.start_time;
+  const end = params.end ?? params.end_time;
+  if (!agents || !start || !end) {
+    throw new Error('agents (or agent_ids), start (or start_time), and end (or end_time) are required');
+  }
+  return client.availability.check({
+    agents,
+    start,
+    end,
+    slot_duration: params.slot_duration,
+    calendars: params.calendars,
+    include_busy: params.include_busy,
+  });
 });
 
 // ── Calendar context ───────────────────────────────────────────

@@ -122,6 +122,52 @@ describe('schemas', () => {
       expect(result.success).toBe(true);
     });
 
+    it('ListEventsSchema requires calendar_id', () => {
+      const result = schemas.ListEventsSchema.safeParse({ start_after: '2026-04-15T00:00:00Z' });
+      expect(result.success).toBe(false);
+    });
+
+    it('CreateEventSchema accepts status="hold" with hold fields', () => {
+      const result = schemas.CreateEventSchema.safeParse({
+        calendar_id: 'cal_123',
+        title: 'Tentative',
+        start_time: '2026-04-15T09:00:00Z',
+        end_time: '2026-04-15T10:00:00Z',
+        status: 'hold',
+        hold_expires_at: '2026-04-15T08:55:00Z',
+        hold_priority: 10,
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('CreateEventSchema rejects status="cancelled" (not a valid create status)', () => {
+      const result = schemas.CreateEventSchema.safeParse({
+        calendar_id: 'cal_123',
+        title: 'X',
+        start_time: '2026-04-15T09:00:00Z',
+        end_time: '2026-04-15T10:00:00Z',
+        status: 'cancelled',
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('UpdateCalendarSchema accepts agent_status', () => {
+      const result = schemas.UpdateCalendarSchema.safeParse({ calendar_id: 'cal_1', agent_status: 'waiting' });
+      expect(result.success).toBe(true);
+    });
+
+    it('GetEventSchema requires calendar_id (SDK is calendar-scoped)', () => {
+      const result = schemas.GetEventSchema.safeParse({ event_id: 'evt_1' });
+      expect(result.success).toBe(false);
+    });
+
+    it('GetAvailabilitySchema accepts start_time/end_time aliases', () => {
+      const result = schemas.GetAvailabilitySchema.safeParse({
+        agent_id: 'agt_1', start_time: '2026-04-15T00:00:00Z', end_time: '2026-04-16T00:00:00Z',
+      });
+      expect(result.success).toBe(true);
+    });
+
     it('SubscribeICalSchema requires agent_id, calendar_id, and url', () => {
       const result = schemas.SubscribeICalSchema.safeParse({
         agent_id: 'agt_123',
