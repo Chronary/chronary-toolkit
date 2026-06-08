@@ -376,7 +376,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'revoke_scoped_key',
-    description: 'Revoke an agent-scoped API key by ID. The key stops authenticating immediately and cannot be un-revoked. Requires an org-level API key.',
+    description: 'Revoke an agent-scoped API key by ID. Revocation is permanent (cannot be un-revoked); the key stops authenticating within about a minute. Requires an org-level API key.',
     schema: schemas.RevokeScopedKeySchema,
     annotations: { title: 'Revoke Scoped Key', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.revokeScopedKey),
