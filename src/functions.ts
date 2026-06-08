@@ -20,10 +20,10 @@ async function fetchPage(
 // ── Calendars ──────────────────────────────────────────────────
 
 export const listCalendars = safeFunc(async (ctx: Ctx<{
-  include?: 'all'; limit?: number; offset?: number;
+  agent_id?: string; include?: 'all'; limit?: number; offset?: number;
 }>) => {
   const { client, params } = ctx;
-  const iter = client.calendars.list({ include: params.include, limit: params.limit });
+  const iter = client.calendars.list({ agentId: params.agent_id, include: params.include, limit: params.limit });
   return fetchPage(iter, params.offset, params.limit);
 });
 
@@ -62,21 +62,31 @@ export const deleteCalendar = safeFunc(async (ctx: Ctx<{ calendar_id: string }>)
 // ── Events ─────────────────────────────────────────────────────
 
 export const listEvents = safeFunc(async (ctx: Ctx<{
-  calendar_id: string; start_after?: string; start_before?: string;
+  calendar_id?: string; agent_id?: string; start_after?: string; start_before?: string;
+  status?: 'confirmed' | 'tentative' | 'cancelled' | 'hold'; source?: 'internal' | 'external_ical';
   limit?: number; offset?: number;
 }>) => {
   const { client, params } = ctx;
+  if (!params.calendar_id && !params.agent_id) {
+    throw new Error('Provide calendar_id or agent_id');
+  }
   const iter = client.events.list({
     calendarId: params.calendar_id,
+    agentId: params.agent_id,
     start_after: params.start_after,
     start_before: params.start_before,
+    status: params.status,
+    source: params.source,
     limit: params.limit,
   });
   return fetchPage(iter, params.offset, params.limit);
 });
 
-export const getEvent = safeFunc(async (ctx: Ctx<{ calendar_id: string; event_id: string }>) => {
-  return ctx.client.events.get(ctx.params.calendar_id, ctx.params.event_id);
+export const getEvent = safeFunc(async (ctx: Ctx<{ calendar_id?: string; event_id: string }>) => {
+  const { calendar_id, event_id } = ctx.params;
+  return calendar_id
+    ? ctx.client.events.get(calendar_id, event_id)
+    : ctx.client.events.getById(event_id);
 });
 
 export const createEvent = safeFunc(async (ctx: Ctx<{
@@ -91,17 +101,24 @@ export const createEvent = safeFunc(async (ctx: Ctx<{
 });
 
 export const updateEvent = safeFunc(async (ctx: Ctx<{
-  calendar_id: string; event_id: string; title?: string; description?: string | null;
+  calendar_id?: string; event_id: string; title?: string; description?: string | null;
   start_time?: string; end_time?: string; all_day?: boolean;
   status?: 'confirmed' | 'tentative' | 'cancelled'; reminders?: number[] | null; metadata?: Record<string, unknown>;
 }>) => {
   const { client, params } = ctx;
   const { calendar_id, event_id, ...updates } = params;
-  return client.events.update(calendar_id, event_id, updates);
+  return calendar_id
+    ? client.events.update(calendar_id, event_id, updates)
+    : client.events.updateById(event_id, updates);
 });
 
-export const cancelEvent = safeFunc(async (ctx: Ctx<{ calendar_id: string; event_id: string }>) => {
-  await ctx.client.events.delete(ctx.params.calendar_id, ctx.params.event_id);
+export const cancelEvent = safeFunc(async (ctx: Ctx<{ calendar_id?: string; event_id: string }>) => {
+  const { calendar_id, event_id } = ctx.params;
+  if (calendar_id) {
+    await ctx.client.events.delete(calendar_id, event_id);
+  } else {
+    await ctx.client.events.deleteById(event_id);
+  }
   return undefined;
 });
 

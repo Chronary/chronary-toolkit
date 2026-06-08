@@ -80,10 +80,34 @@ describe('tool functions', () => {
     expect(client.events.get).toHaveBeenCalledWith('cal_1', 'evt_1');
   });
 
+  it('getEvent resolves calendar from event_id when calendar_id omitted', async () => {
+    await fns.getEvent({ client: asClient(), params: { event_id: 'evt_1' } });
+    expect(client.events.getById).toHaveBeenCalledWith('evt_1');
+    expect(client.events.get).not.toHaveBeenCalled();
+  });
+
+  it('updateEvent uses calendar-scoped route when calendar_id provided', async () => {
+    await fns.updateEvent({ client: asClient(), params: { calendar_id: 'cal_1', event_id: 'evt_1', title: 'X' } });
+    expect(client.events.update).toHaveBeenCalledWith('cal_1', 'evt_1', expect.objectContaining({ title: 'X' }));
+  });
+
+  it('updateEvent uses event-only route when calendar_id omitted', async () => {
+    await fns.updateEvent({ client: asClient(), params: { event_id: 'evt_1', title: 'X' } });
+    expect(client.events.updateById).toHaveBeenCalledWith('evt_1', expect.objectContaining({ title: 'X' }));
+    expect(client.events.update).not.toHaveBeenCalled();
+  });
+
   it('cancelEvent returns success', async () => {
     const result = await fns.cancelEvent({ client: asClient(), params: { calendar_id: 'cal_1', event_id: 'evt_1' } });
     expect(result).toEqual({ result: { success: true }, isError: false });
     expect(client.events.delete).toHaveBeenCalledWith('cal_1', 'evt_1');
+  });
+
+  it('cancelEvent resolves calendar from event_id when calendar_id omitted', async () => {
+    const result = await fns.cancelEvent({ client: asClient(), params: { event_id: 'evt_1' } });
+    expect(result).toEqual({ result: { success: true }, isError: false });
+    expect(client.events.deleteById).toHaveBeenCalledWith('evt_1');
+    expect(client.events.delete).not.toHaveBeenCalled();
   });
 
   it('confirmEvent calls events.confirm(event_id)', async () => {

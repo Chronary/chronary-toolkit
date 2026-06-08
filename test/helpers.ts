@@ -29,9 +29,12 @@ export function mockChronaryClient() {
     events: {
       list: vi.fn().mockReturnValue(mockPage()),
       get: vi.fn().mockResolvedValue(FIXTURES.event),
+      getById: vi.fn().mockResolvedValue(FIXTURES.event),
       create: vi.fn().mockResolvedValue(FIXTURES.event),
       update: vi.fn().mockResolvedValue(FIXTURES.event),
+      updateById: vi.fn().mockResolvedValue(FIXTURES.event),
       delete: vi.fn().mockResolvedValue(undefined),
+      deleteById: vi.fn().mockResolvedValue(undefined),
       confirm: vi.fn().mockResolvedValue(FIXTURES.event),
       release: vi.fn().mockResolvedValue(FIXTURES.event),
     },

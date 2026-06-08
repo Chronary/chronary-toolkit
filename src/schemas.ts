@@ -29,6 +29,7 @@ const WEBHOOK_DELIVERY_STATUSES = ['pending', 'delivered', 'failed'] as const;
 // ── Calendars ──────────────────────────────────────────────────
 
 export const ListCalendarsSchema = z.object({
+  agent_id: z.string().optional().describe('Filter to calendars owned by this agent. Org keys only — agent-scoped keys are always limited to their own agent and ignore this.'),
   include: z.enum(['all']).optional().describe('Pass "all" to include calendars across all agents (org keys only)'),
   limit: z.number().int().min(1).max(200).default(50).describe('Max results to return'),
   offset: z.number().int().min(0).default(0).describe('Pagination offset'),
@@ -61,16 +62,19 @@ export const DeleteCalendarSchema = z.object({
 // ── Events ─────────────────────────────────────────────────────
 
 export const ListEventsSchema = z.object({
-  calendar_id: z.string().describe('Calendar ID to list events from'),
-  start_after: z.string().datetime().optional().describe('Filter events starting after this time'),
-  start_before: z.string().datetime().optional().describe('Filter events starting before this time'),
+  calendar_id: z.string().optional().describe('Calendar ID to list events from. Provide this or agent_id.'),
+  agent_id: z.string().optional().describe('Agent ID to list events for across all of the agent\'s calendars. Provide this or calendar_id.'),
+  start_after: z.string().datetime().optional().describe('Only events starting after this ISO 8601 time'),
+  start_before: z.string().datetime().optional().describe('Only events starting before this ISO 8601 time'),
+  status: z.enum(['confirmed', 'tentative', 'cancelled', 'hold']).optional().describe('Filter by event status'),
+  source: z.enum(['internal', 'external_ical']).optional().describe('Filter by source: "internal" (created via the API) or "external_ical" (synced from an iCal subscription)'),
   limit: z.number().int().min(1).max(200).default(50).describe('Max results to return'),
   offset: z.number().int().min(0).default(0).describe('Pagination offset'),
 });
 
 export const GetEventSchema = z.object({
   event_id: z.string().describe('Event ID to retrieve'),
-  calendar_id: z.string().describe('Calendar ID that owns the event. Required — the SDK is calendar-scoped (unlike the hosted MCP, which can resolve the calendar from event_id).'),
+  calendar_id: z.string().optional().describe('Calendar ID that owns the event. Optional — if omitted the calendar is resolved from the event.'),
 });
 
 export const CreateEventSchema = z.object({
@@ -88,7 +92,7 @@ export const CreateEventSchema = z.object({
 
 export const UpdateEventSchema = z.object({
   event_id: z.string().describe('Event ID to update'),
-  calendar_id: z.string().describe('Calendar ID that owns the event. Required — the SDK is calendar-scoped (unlike the hosted MCP, which can resolve the calendar from event_id).'),
+  calendar_id: z.string().optional().describe('Calendar ID that owns the event. Optional — if omitted the calendar is resolved from the event.'),
   title: z.string().min(1).max(500).optional().describe('New event title'),
   description: z.string().nullable().optional().describe('New description, or null to clear it'),
   start_time: z.string().datetime().optional().describe('New start time (ISO 8601)'),
@@ -101,7 +105,7 @@ export const UpdateEventSchema = z.object({
 
 export const CancelEventSchema = z.object({
   event_id: z.string().describe('Event ID to cancel'),
-  calendar_id: z.string().describe('Calendar ID that owns the event. Required — the SDK is calendar-scoped (unlike the hosted MCP, which can resolve the calendar from event_id).'),
+  calendar_id: z.string().optional().describe('Calendar ID that owns the event. Optional — if omitted the calendar is resolved from the event. Matches the asymmetry with confirm_event / release_event which never required this arg.'),
 });
 
 export const ConfirmEventSchema = z.object({
@@ -227,7 +231,9 @@ const timeOfDay = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'must be HH:MM i
 const workingHoursDaySchema = z.object({
   start: timeOfDay,
   end: timeOfDay,
-});
+})
+  .refine((v) => v.end > v.start, 'end must be after start')
+  .describe('A single day\'s working hours window');
 
 const workingHoursSchema = z.object({
   mon: workingHoursDaySchema.optional(),
@@ -237,7 +243,9 @@ const workingHoursSchema = z.object({
   fri: workingHoursDaySchema.optional(),
   sat: workingHoursDaySchema.optional(),
   sun: workingHoursDaySchema.optional(),
-}).nullable();
+})
+  .refine((v) => Object.keys(v).length > 0, 'at least one day must be specified')
+  .nullable();
 
 export const SetAvailabilityRulesSchema = z.object({
   calendar_id: z.string().describe('Calendar to configure'),

@@ -94,7 +94,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   // ── Events ─────────────────────────────────────────────────────
   {
     name: 'list_events',
-    description: 'List all events on a calendar, including internally created events and externally synced events from iCal subscriptions (e.g. Google Calendar, Outlook). Use start_after and start_before to query a specific time window.',
+    description: 'List events on a calendar or across an agent\'s calendars, including internally created events and externally synced events from iCal subscriptions (e.g. Google Calendar, Outlook). Provide `calendar_id` OR `agent_id`. Narrow with `start_after`/`start_before` (time window), `status`, and `source`.',
     schema: schemas.ListEventsSchema,
     annotations: { title: 'List Events', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.listEvents),

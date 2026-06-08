@@ -122,9 +122,11 @@ describe('schemas', () => {
       expect(result.success).toBe(true);
     });
 
-    it('ListEventsSchema requires calendar_id', () => {
-      const result = schemas.ListEventsSchema.safeParse({ start_after: '2026-04-15T00:00:00Z' });
-      expect(result.success).toBe(false);
+    it('ListEventsSchema accepts calendar_id or agent_id (both optional at the schema level)', () => {
+      expect(schemas.ListEventsSchema.safeParse({ calendar_id: 'cal_1' }).success).toBe(true);
+      expect(schemas.ListEventsSchema.safeParse({ agent_id: 'agt_1' }).success).toBe(true);
+      // status/source filters are accepted
+      expect(schemas.ListEventsSchema.safeParse({ agent_id: 'agt_1', status: 'hold', source: 'internal' }).success).toBe(true);
     });
 
     it('CreateEventSchema accepts status="hold" with hold fields', () => {
@@ -156,9 +158,9 @@ describe('schemas', () => {
       expect(result.success).toBe(true);
     });
 
-    it('GetEventSchema requires calendar_id (SDK is calendar-scoped)', () => {
+    it('GetEventSchema makes calendar_id optional (resolved from event_id)', () => {
       const result = schemas.GetEventSchema.safeParse({ event_id: 'evt_1' });
-      expect(result.success).toBe(false);
+      expect(result.success).toBe(true);
     });
 
     it('GetAvailabilitySchema accepts start_time/end_time aliases', () => {
