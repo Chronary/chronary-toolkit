@@ -175,6 +175,20 @@ describe('tool functions', () => {
     expect(client.availability.forAgent).not.toHaveBeenCalled();
   });
 
+  it('getAvailability forwards the preferred duration alias', async () => {
+    await fns.getAvailability({ client: asClient(), params: {
+      agent_id: 'agt_1', start: '2026-04-15T00:00:00Z', end: '2026-04-16T00:00:00Z', duration: '1h',
+    } });
+    expect(client.availability.forAgent).toHaveBeenCalledWith('agt_1', expect.objectContaining({ duration: '1h' }));
+  });
+
+  it('getAvailability still forwards the deprecated slot_duration alias', async () => {
+    await fns.getAvailability({ client: asClient(), params: {
+      agent_id: 'agt_1', start: '2026-04-15T00:00:00Z', end: '2026-04-16T00:00:00Z', slot_duration: '45m',
+    } });
+    expect(client.availability.forAgent).toHaveBeenCalledWith('agt_1', expect.objectContaining({ slot_duration: '45m' }));
+  });
+
   it('findMeetingTime passes params through', async () => {
     await fns.findMeetingTime({ client: asClient(), params: {
       agents: ['agt_1'], start: '2026-04-15T00:00:00Z', end: '2026-04-16T00:00:00Z',
@@ -197,6 +211,13 @@ describe('tool functions', () => {
     } });
     expect(result.isError).toBe(true);
     expect(client.availability.check).not.toHaveBeenCalled();
+  });
+
+  it('findMeetingTime forwards duration and slot_duration aliases', async () => {
+    await fns.findMeetingTime({ client: asClient(), params: {
+      agents: ['agt_1'], start: '2026-04-15T00:00:00Z', end: '2026-04-16T00:00:00Z', duration: '2h',
+    } });
+    expect(client.availability.check).toHaveBeenCalledWith(expect.objectContaining({ duration: '2h' }));
   });
 
   // ── Calendar context ──

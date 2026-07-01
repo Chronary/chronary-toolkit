@@ -155,7 +155,8 @@ export const GetAvailabilitySchema = z.object({
   end: z.string().datetime().optional().describe('Range end (ISO 8601). Alias: end_time.'),
   start_time: z.string().datetime().optional().describe('Alias for `start` (matches REST events naming).'),
   end_time: z.string().datetime().optional().describe('Alias for `end` (matches REST events naming).'),
-  slot_duration: z.enum(['15m', '30m', '45m', '1h', '2h']).default('30m').describe('Minimum slot duration required — only free blocks at least this long are returned'),
+  duration: z.enum(['15m', '30m', '45m', '1h', '2h']).optional().describe('Requested slot length (15m/30m/45m/1h/2h). Preferred over the deprecated slot_duration. Defaults to 30m.'),
+  slot_duration: z.enum(['15m', '30m', '45m', '1h', '2h']).optional().describe('Deprecated alias for `duration` — minimum slot length. Prefer `duration`.'),
   include_busy: z.boolean().default(false).describe('Include busy blocks in response'),
 });
 
@@ -166,7 +167,8 @@ export const FindMeetingTimeSchema = z.object({
   end: z.string().datetime().optional().describe('Search range end (ISO 8601). Alias: end_time.'),
   start_time: z.string().datetime().optional().describe('Alias for `start` (matches REST events naming).'),
   end_time: z.string().datetime().optional().describe('Alias for `end` (matches REST events naming).'),
-  slot_duration: z.enum(['15m', '30m', '45m', '1h', '2h']).default('30m').describe('Minimum slot duration required — only free blocks at least this long are returned'),
+  duration: z.enum(['15m', '30m', '45m', '1h', '2h']).optional().describe('Requested slot length (15m/30m/45m/1h/2h). Preferred over the deprecated slot_duration. Defaults to 30m.'),
+  slot_duration: z.enum(['15m', '30m', '45m', '1h', '2h']).optional().describe('Deprecated alias for `duration` — minimum slot length. Prefer `duration`.'),
   calendars: z.array(z.string()).optional().describe('Additional shared calendar IDs to treat as busy'),
   include_busy: z.boolean().default(false).describe('Include per-agent busy blocks in response'),
 });

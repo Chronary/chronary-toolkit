@@ -66,6 +66,20 @@ describe('MCP adapter', () => {
     });
   });
 
+  // Regression: hosted MCP (apps/api) exposes `duration` (preferred) alongside the
+  // deprecated `slot_duration` on the availability tools. The stdio toolkit schemas
+  // must stay in parity so schema-driven clients see the same alias on both surfaces.
+  it('availability tools expose the preferred `duration` field plus deprecated `slot_duration`', () => {
+    const toolkit = new ChronaryToolkit({ ...config, tools: ['get_availability', 'find_meeting_time'] });
+    const tools = toolkit.getTools();
+    for (const name of ['get_availability', 'find_meeting_time']) {
+      const tool = tools.find(t => t.name === name)!;
+      const props = (tool.inputSchema as { properties?: Record<string, unknown> }).properties ?? {};
+      expect(props).toHaveProperty('duration');
+      expect(props).toHaveProperty('slot_duration');
+    }
+  });
+
   it('registerAll delivers read-only annotations for list/get tools', () => {
     const toolkit = new ChronaryToolkit({ ...config, tools: ['list_calendars', 'find_meeting_time'] });
     const mockServer = { registerTool: vi.fn() };

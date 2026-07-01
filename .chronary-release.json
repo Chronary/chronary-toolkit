@@ -1,9 +1,9 @@
 {
   "artifact": "toolkit",
-  "version": "1.2.1",
-  "public_tag": "v1.2.1",
-  "private_source_sha": "f4474e368d40018c8e1ed81ed6ee79307b814edf",
-  "private_release_tag": "public-release/20260608.4-f4474e3",
+  "version": "1.2.2",
+  "public_tag": "v1.2.2",
+  "private_source_sha": "e02d793c11d5d953f7ea3daec6f54393ca5ff578",
+  "private_release_tag": "public-release/20260701.2-e02d793",
   "publish_registry": true,
-  "generated_at": "2026-06-08T15:24:33.855Z"
+  "generated_at": "2026-07-01T19:26:34.139Z"
 }

@@ -167,11 +167,13 @@ export const deleteAgent = safeFunc(async (ctx: Ctx<{ agent_id: string }>) => {
 
 export const getAvailability = safeFunc(async (ctx: Ctx<{
   agent_id: string; start?: string; end?: string; start_time?: string; end_time?: string;
+  duration?: '15m' | '30m' | '45m' | '1h' | '2h';
   slot_duration?: '15m' | '30m' | '45m' | '1h' | '2h'; include_busy?: boolean;
 }>) => {
   const { client, params } = ctx;
   // Resolve the `start`/`end` canonical names from their REST aliases, mirroring
-  // the hosted MCP tool's validation.
+  // the hosted MCP tool's validation. `duration`/`slot_duration` are forwarded
+  // as-is; the API coalesces them (and rejects conflicting values with a 400).
   const start = params.start ?? params.start_time;
   const end = params.end ?? params.end_time;
   if (!start || !end) {
@@ -180,6 +182,7 @@ export const getAvailability = safeFunc(async (ctx: Ctx<{
   return client.availability.forAgent(params.agent_id, {
     start,
     end,
+    duration: params.duration,
     slot_duration: params.slot_duration,
     include_busy: params.include_busy,
   });
@@ -188,12 +191,14 @@ export const getAvailability = safeFunc(async (ctx: Ctx<{
 export const findMeetingTime = safeFunc(async (ctx: Ctx<{
   agents?: string[]; agent_ids?: string[];
   start?: string; end?: string; start_time?: string; end_time?: string;
+  duration?: '15m' | '30m' | '45m' | '1h' | '2h';
   slot_duration?: '15m' | '30m' | '45m' | '1h' | '2h';
   calendars?: string[]; include_busy?: boolean;
 }>) => {
   const { client, params } = ctx;
   // Resolve the canonical `agents`/`start`/`end` from their REST/scheduling
-  // aliases, mirroring the hosted MCP tool's validation.
+  // aliases, mirroring the hosted MCP tool's validation. `duration`/`slot_duration`
+  // are forwarded as-is; the API coalesces them (400 on conflicting values).
   const agents = params.agents ?? params.agent_ids;
   const start = params.start ?? params.start_time;
   const end = params.end ?? params.end_time;
@@ -204,6 +209,7 @@ export const findMeetingTime = safeFunc(async (ctx: Ctx<{
     agents,
     start,
     end,
+    duration: params.duration,
     slot_duration: params.slot_duration,
     calendars: params.calendars,
     include_busy: params.include_busy,
