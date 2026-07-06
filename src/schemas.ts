@@ -182,10 +182,10 @@ export const GetCalendarContextSchema = z.object({
 // ── Scheduling proposals ───────────────────────────────────────
 
 const proposalSlotSchema = z.object({
-  start_time: z.string().datetime(),
-  end_time: z.string().datetime(),
-  weight: z.number().min(0).max(10).default(1.0).optional(),
-  calendar_id: z.string().optional(),
+  start_time: z.string().datetime().describe('Slot start time (ISO 8601)'),
+  end_time: z.string().datetime().describe('Slot end time (ISO 8601), after start_time'),
+  weight: z.number().min(0).max(10).default(1.0).optional().describe('Preference for this slot, 0–10 (higher = more preferred). Used to rank candidate slots when the proposal is resolved. Defaults to 1.'),
+  calendar_id: z.string().optional().describe('Calendar to create the event on if this slot is chosen. Defaults to the proposal\'s top-level calendar_id.'),
 });
 
 export const CreateProposalSchema = z.object({
@@ -231,8 +231,8 @@ export const CancelProposalSchema = z.object({
 const timeOfDay = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'must be HH:MM in 24-hour time');
 
 const workingHoursDaySchema = z.object({
-  start: timeOfDay,
-  end: timeOfDay,
+  start: timeOfDay.describe('Start of the working window, HH:MM 24-hour, in the rules timezone (e.g. "09:00")'),
+  end: timeOfDay.describe('End of the working window, HH:MM 24-hour, after start (e.g. "17:00")'),
 })
   .refine((v) => v.end > v.start, 'end must be after start')
   .describe('A single day\'s working hours window');
