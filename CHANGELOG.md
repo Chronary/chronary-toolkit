@@ -2,6 +2,10 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
+## 1.2.4 — 2026-07-09
+
+- Docs/metadata: correct the README tool count (the adapters expose **47** calendar tools, not 23 — the toolkit was expanded to full parity with the hosted MCP surface). No code or behavioral change; version bump exists to publish the corrected README to npm + the mirror.
+
 ## 1.2.3 — 2026-07-07
 
 - Add parameter descriptions to the nested scheduling-proposal slot object (`start_time`, `end_time`, `weight`, `calendar_id` on `create_proposal` / `respond_to_proposal` slots) and to the availability-rules working-hours `start`/`end` fields. These were the only tool parameters lacking `.describe()`, so agents now get guidance on every field. Improves MCP tool-definition quality (e.g. Glama's scoring) with no behavioral change. `@chronary/mcp` picks this up automatically via its `^1.2.2` caret range.
