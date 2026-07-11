@@ -64,7 +64,7 @@ export const deleteCalendar = safeFunc(async (ctx: Ctx<{ calendar_id: string }>)
 export const listEvents = safeFunc(async (ctx: Ctx<{
   calendar_id?: string; agent_id?: string; start_after?: string; start_before?: string;
   status?: 'confirmed' | 'tentative' | 'cancelled' | 'hold'; source?: 'internal' | 'external_ical';
-  limit?: number; offset?: number;
+  limit?: number; offset?: number; expand?: boolean;
 }>) => {
   const { client, params } = ctx;
   if (!params.calendar_id && !params.agent_id) {
@@ -77,6 +77,7 @@ export const listEvents = safeFunc(async (ctx: Ctx<{
     start_before: params.start_before,
     status: params.status,
     source: params.source,
+    expand: params.expand,
     limit: params.limit,
   });
   return fetchPage(iter, params.offset, params.limit);
@@ -93,7 +94,7 @@ export const createEvent = safeFunc(async (ctx: Ctx<{
   calendar_id: string; title: string; start_time: string; end_time: string;
   description?: string; all_day?: boolean;
   status?: 'confirmed' | 'tentative' | 'hold'; reminders?: number[] | null; metadata?: Record<string, unknown>;
-  hold_expires_at?: string; hold_priority?: number;
+  hold_expires_at?: string; hold_priority?: number; recurrence_rule?: string;
 }>) => {
   const { client, params } = ctx;
   const { calendar_id, ...eventParams } = params;
@@ -104,6 +105,7 @@ export const updateEvent = safeFunc(async (ctx: Ctx<{
   calendar_id?: string; event_id: string; title?: string; description?: string | null;
   start_time?: string; end_time?: string; all_day?: boolean;
   status?: 'confirmed' | 'tentative' | 'cancelled'; reminders?: number[] | null; metadata?: Record<string, unknown>;
+  recurrence_rule?: string | null;
 }>) => {
   const { client, params } = ctx;
   const { calendar_id, event_id, ...updates } = params;
@@ -112,8 +114,17 @@ export const updateEvent = safeFunc(async (ctx: Ctx<{
     : client.events.updateById(event_id, updates);
 });
 
-export const cancelEvent = safeFunc(async (ctx: Ctx<{ calendar_id?: string; event_id: string }>) => {
-  const { calendar_id, event_id } = ctx.params;
+export const cancelEvent = safeFunc(async (ctx: Ctx<{ calendar_id?: string; event_id: string; occurrence_start?: string }>) => {
+  const { calendar_id, event_id, occurrence_start } = ctx.params;
+  if (occurrence_start) {
+    // Single-occurrence cancel on a recurring series (#996): the API EXDATEs
+    // that occurrence and returns the updated series master (the rest of the
+    // series is unaffected). Mirrors the hosted MCP tool's response shape.
+    const event = calendar_id
+      ? await ctx.client.events.delete(calendar_id, event_id, { occurrence_start })
+      : await ctx.client.events.deleteById(event_id, { occurrence_start });
+    return { occurrence_cancelled: true, id: event_id, occurrence_start, event };
+  }
   if (calendar_id) {
     await ctx.client.events.delete(calendar_id, event_id);
   } else {

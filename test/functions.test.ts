@@ -110,6 +110,52 @@ describe('tool functions', () => {
     expect(client.events.delete).not.toHaveBeenCalled();
   });
 
+  it('createEvent forwards recurrence_rule', async () => {
+    await fns.createEvent({ client: asClient(), params: {
+      calendar_id: 'cal_1', title: 'Standup', start_time: '2026-04-15T09:00:00Z', end_time: '2026-04-15T09:30:00Z',
+      recurrence_rule: 'FREQ=WEEKLY;BYDAY=MO,WE;COUNT=12',
+    } });
+    expect(client.events.create).toHaveBeenCalledWith('cal_1', expect.objectContaining({
+      recurrence_rule: 'FREQ=WEEKLY;BYDAY=MO,WE;COUNT=12',
+    }));
+  });
+
+  it('updateEvent forwards recurrence_rule (null clears the series rule)', async () => {
+    await fns.updateEvent({ client: asClient(), params: { event_id: 'evt_1', recurrence_rule: null } });
+    expect(client.events.updateById).toHaveBeenCalledWith('evt_1', expect.objectContaining({ recurrence_rule: null }));
+  });
+
+  it('listEvents forwards expand to events.list', async () => {
+    await fns.listEvents({ client: asClient(), params: {
+      calendar_id: 'cal_1', start_after: '2026-04-01T00:00:00Z', start_before: '2026-05-01T00:00:00Z', expand: true,
+    } });
+    expect(client.events.list).toHaveBeenCalledWith(expect.objectContaining({
+      calendarId: 'cal_1', start_after: '2026-04-01T00:00:00Z', start_before: '2026-05-01T00:00:00Z', expand: true,
+    }));
+  });
+
+  it('cancelEvent with occurrence_start cancels one occurrence and returns the updated master', async () => {
+    client.events.delete.mockResolvedValue(FIXTURES.event);
+    const result = await fns.cancelEvent({ client: asClient(), params: {
+      calendar_id: 'cal_1', event_id: 'evt_1', occurrence_start: '2026-04-22T09:00:00Z',
+    } });
+    expect(client.events.delete).toHaveBeenCalledWith('cal_1', 'evt_1', { occurrence_start: '2026-04-22T09:00:00Z' });
+    expect(result).toEqual({
+      result: { occurrence_cancelled: true, id: 'evt_1', occurrence_start: '2026-04-22T09:00:00Z', event: FIXTURES.event },
+      isError: false,
+    });
+  });
+
+  it('cancelEvent with occurrence_start resolves calendar from event_id when calendar_id omitted', async () => {
+    client.events.deleteById.mockResolvedValue(FIXTURES.event);
+    const result = await fns.cancelEvent({ client: asClient(), params: {
+      event_id: 'evt_1', occurrence_start: '2026-04-22T09:00:00Z',
+    } });
+    expect(client.events.deleteById).toHaveBeenCalledWith('evt_1', { occurrence_start: '2026-04-22T09:00:00Z' });
+    expect(client.events.delete).not.toHaveBeenCalled();
+    expect(result.isError).toBe(false);
+  });
+
   it('confirmEvent calls events.confirm(event_id)', async () => {
     const result = await fns.confirmEvent({ client: asClient(), params: { event_id: 'evt_1' } });
     expect(result.isError).toBe(false);

@@ -70,6 +70,7 @@ export const ListEventsSchema = z.object({
   source: z.enum(['internal', 'external_ical']).optional().describe('Filter by source: "internal" (created via the API) or "external_ical" (synced from an iCal subscription)'),
   limit: z.number().int().min(1).max(200).default(50).describe('Max results to return'),
   offset: z.number().int().min(0).default(0).describe('Pagination offset'),
+  expand: z.boolean().default(false).describe('Expand recurring series into individual occurrence instances within the window. Requires both start_after and start_before (max 366 days apart). Instances carry recurringEventId + originalStartTime.'),
 });
 
 export const GetEventSchema = z.object({
@@ -88,6 +89,7 @@ export const CreateEventSchema = z.object({
   reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('Reminder offsets in minutes before start_time (e.g. [10, 1440]). Each fires an event.reminder webhook and shows as an alarm in the iCal feed. Omit or null to inherit the calendar default (then the system default of 10 min); [] for no reminders.'),
   hold_expires_at: z.string().datetime().optional().describe('Required when status="hold". ISO 8601 timestamp 30s-15min in the future. Auto-releases the hold when reached.'),
   hold_priority: z.number().int().min(0).max(100).optional().describe('Only valid with status="hold". Higher-priority overlapping holds pre-empt lower-priority ones. Defaults to 0.'),
+  recurrence_rule: z.string().max(256).optional().describe('Make this a recurring series (RFC 5545 RRULE subset, no "RRULE:" prefix), e.g. "FREQ=WEEKLY;BYDAY=MO,WE;COUNT=12". Supports FREQ=DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, COUNT (max 730) or UNTIL, BYDAY (weekly list or monthly ordinal like 2TU/-1FR), BYMONTHDAY (1-28 or -1). start_time must match the rule pattern; expansion is UTC-only. Not allowed with status="hold". Free plan: max 5 recurring events, series must end within 90 days.'),
 });
 
 export const UpdateEventSchema = z.object({
@@ -101,11 +103,13 @@ export const UpdateEventSchema = z.object({
   status: z.enum(['confirmed', 'tentative', 'cancelled']).optional().describe('New event status'),
   metadata: z.record(z.string(), z.unknown()).optional().describe('Replacement metadata object'),
   reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('Reminder offsets in minutes before start_time. Omit to leave unchanged, null to inherit the calendar default, [] for no reminders.'),
+  recurrence_rule: z.string().max(256).nullable().optional().describe('Set/change the recurring series rule (RFC 5545 RRULE subset, full-series semantics), or null to make the event a one-off. Changing the rule or start_time resets cancelled occurrences.'),
 });
 
 export const CancelEventSchema = z.object({
   event_id: z.string().describe('Event ID to cancel'),
   calendar_id: z.string().optional().describe('Calendar ID that owns the event. Optional — if omitted the calendar is resolved from the event. Matches the asymmetry with confirm_event / release_event which never required this arg.'),
+  occurrence_start: z.string().datetime().optional().describe('For recurring events only: ISO 8601 start of the single occurrence to cancel. The rest of the series is unaffected.'),
 });
 
 export const ConfirmEventSchema = z.object({

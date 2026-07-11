@@ -153,6 +153,51 @@ describe('schemas', () => {
       expect(result.success).toBe(false);
     });
 
+    it('CreateEventSchema accepts recurrence_rule', () => {
+      const result = schemas.CreateEventSchema.safeParse({
+        calendar_id: 'cal_123',
+        title: 'Standup',
+        start_time: '2026-04-15T09:00:00Z',
+        end_time: '2026-04-15T09:30:00Z',
+        recurrence_rule: 'FREQ=WEEKLY;BYDAY=MO,WE;COUNT=12',
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it('CreateEventSchema rejects an oversize recurrence_rule (>256 chars)', () => {
+      const result = schemas.CreateEventSchema.safeParse({
+        calendar_id: 'cal_123',
+        title: 'X',
+        start_time: '2026-04-15T09:00:00Z',
+        end_time: '2026-04-15T09:30:00Z',
+        recurrence_rule: 'FREQ=DAILY;'.repeat(30),
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it('UpdateEventSchema accepts recurrence_rule string and null (clear the rule)', () => {
+      expect(schemas.UpdateEventSchema.safeParse({ event_id: 'evt_1', recurrence_rule: 'FREQ=DAILY;COUNT=5' }).success).toBe(true);
+      expect(schemas.UpdateEventSchema.safeParse({ event_id: 'evt_1', recurrence_rule: null }).success).toBe(true);
+    });
+
+    it('ListEventsSchema accepts expand and defaults it to false', () => {
+      const result = schemas.ListEventsSchema.safeParse({
+        calendar_id: 'cal_1',
+        start_after: '2026-04-01T00:00:00Z',
+        start_before: '2026-05-01T00:00:00Z',
+        expand: true,
+      });
+      expect(result.success).toBe(true);
+      const defaulted = schemas.ListEventsSchema.safeParse({ calendar_id: 'cal_1' });
+      expect(defaulted.success).toBe(true);
+      if (defaulted.success) expect(defaulted.data.expand).toBe(false);
+    });
+
+    it('CancelEventSchema accepts occurrence_start and rejects non-datetime values', () => {
+      expect(schemas.CancelEventSchema.safeParse({ event_id: 'evt_1', occurrence_start: '2026-04-22T09:00:00Z' }).success).toBe(true);
+      expect(schemas.CancelEventSchema.safeParse({ event_id: 'evt_1', occurrence_start: 'not-a-date' }).success).toBe(false);
+    });
+
     it('UpdateCalendarSchema accepts agent_status', () => {
       const result = schemas.UpdateCalendarSchema.safeParse({ calendar_id: 'cal_1', agent_status: 'waiting' });
       expect(result.success).toBe(true);

@@ -122,7 +122,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'cancel_event',
-    description: 'Delete or cancel an event from a calendar. Use this to remove, cancel, or delete any scheduled event or appointment. The event is marked cancelled and excluded from future availability calculations. `calendar_id` is optional — if omitted the calendar is looked up from the event. Provide `calendar_id` to fail fast on cross-calendar typos.',
+    description: 'Delete or cancel an event from a calendar. Use this to remove, cancel, or delete any scheduled event or appointment. The event is marked cancelled and excluded from future availability calculations. For a recurring series, pass `occurrence_start` to cancel just that one occurrence (the series continues); omit it to cancel the whole series. `calendar_id` is optional — if omitted the calendar is looked up from the event. Provide `calendar_id` to fail fast on cross-calendar typos.',
     schema: schemas.CancelEventSchema,
     annotations: { title: 'Cancel Event', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.cancelEvent),
