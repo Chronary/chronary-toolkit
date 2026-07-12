@@ -91,4 +91,48 @@ describe('MCP adapter', () => {
     }
   });
 
+  // Parity with hosted MCP (audit #): stdio must expose the same 4 prompts and
+  // 1 resource so prompts/list and resources/list don't return "Method not found".
+  it('registerPrompts registers the 4 hosted prompts', () => {
+    const toolkit = new ChronaryToolkit(config);
+    const registerPrompt = vi.fn();
+    toolkit.registerPrompts({ registerTool: vi.fn(), registerPrompt });
+    expect(registerPrompt).toHaveBeenCalledTimes(4);
+    expect(registerPrompt.mock.calls.map((c) => c[0])).toEqual([
+      'schedule_event',
+      'find_meeting_time',
+      'daily_agenda',
+      'new_scheduling_proposal',
+    ]);
+  });
+
+  it('prompt handlers expand into a single user message referencing the args', () => {
+    const toolkit = new ChronaryToolkit(config);
+    const registerPrompt = vi.fn();
+    toolkit.registerPrompts({ registerTool: vi.fn(), registerPrompt });
+    const scheduleHandler = registerPrompt.mock.calls[0][2];
+    const result = scheduleHandler({ calendar_id: 'cal_1', title: 'Sync', start_time: 'S', end_time: 'E' });
+    expect(result.messages).toHaveLength(1);
+    expect(result.messages[0].role).toBe('user');
+    expect(result.messages[0].content.text).toContain('cal_1');
+    expect(result.messages[0].content.text).toContain('Sync');
+  });
+
+  it('registerResources registers the chronary://about resource', () => {
+    const toolkit = new ChronaryToolkit(config);
+    const registerResource = vi.fn();
+    toolkit.registerResources({ registerTool: vi.fn(), registerResource });
+    expect(registerResource).toHaveBeenCalledTimes(1);
+    const [name, uri, , handler] = registerResource.mock.calls[0];
+    expect(name).toBe('about');
+    expect(uri).toBe('chronary://about');
+    expect(handler().contents[0].text).toContain('Chronary');
+  });
+
+  it('registerPrompts/registerResources are safe no-ops on a tool-only server', () => {
+    const toolkit = new ChronaryToolkit(config);
+    expect(() => toolkit.registerPrompts({ registerTool: vi.fn() })).not.toThrow();
+    expect(() => toolkit.registerResources({ registerTool: vi.fn() })).not.toThrow();
+  });
+
 });
