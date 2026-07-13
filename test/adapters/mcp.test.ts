@@ -11,7 +11,7 @@ describe('MCP adapter', () => {
   it('returns array of MCP tool definitions', () => {
     const toolkit = new ChronaryToolkit(config);
     const tools = toolkit.getTools();
-    expect(tools).toHaveLength(47);
+    expect(tools).toHaveLength(50);
   });
 
   it('each tool has name, description, inputSchema, and annotations', () => {
@@ -37,7 +37,7 @@ describe('MCP adapter', () => {
     const toolkit = new ChronaryToolkit(config);
     const mockServer = { registerTool: vi.fn() };
     toolkit.registerAll(mockServer);
-    expect(mockServer.registerTool).toHaveBeenCalledTimes(47);
+    expect(mockServer.registerTool).toHaveBeenCalledTimes(50);
     expect(mockServer.registerTool.mock.calls[0][0]).toBeTruthy(); // first arg is name
   });
 

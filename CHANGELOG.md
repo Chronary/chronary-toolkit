@@ -2,18 +2,23 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
+## 1.4.0 — 2026-07-12
+
+- Add `create_connection_link`, `get_connection_link`, and `cancel_connection_link` for provider-neutral, human-approved Google Calendar and Microsoft Outlook setup.
+- Availability tool guidance now requires agents to inspect fail-closed `availability_state` and `warnings`. The toolkit has full 50-tool hosted-MCP parity.
+
 ## 1.3.0 — 2026-07-10
 
 - Recurring events (#996), in parity with the hosted MCP server and REST API:
   - `create_event` gains optional `recurrence_rule` (RFC 5545 RRULE subset, no `RRULE:` prefix) to create a recurring series.
   - `update_event` gains `recurrence_rule` (string to set/change the series rule — full-series semantics — or `null` to make the event a one-off).
   - `list_events` gains `expand` — expands recurring series into individual occurrence instances within the `start_after`/`start_before` window (both required when `expand=true`, max 366 days apart). Instances carry `recurringEventId` + `originalStartTime`.
-  - `cancel_event` gains optional `occurrence_start` — cancels just that one occurrence of a recurring series (the series continues) and returns the updated series master; omit it to cancel the whole series. No new tool: the tool count stays 47.
+  - `cancel_event` gains optional `occurrence_start` — cancels just that one occurrence of a recurring series (the series continues) and returns the updated series master; omit it to cancel the whole series. No new tool was added in that release.
 - Requires `@chronary/sdk` >= 0.5.0 (the release that adds `recurrence_rule` / `expand` / `occurrence_start`); the workspace dependency resolves this automatically at publish time.
 
 ## 1.2.4 — 2026-07-09
 
-- Docs/metadata: correct the README tool count (the adapters expose **47** calendar tools, not 23 — the toolkit was expanded to full parity with the hosted MCP surface). No code or behavioral change; version bump exists to publish the corrected README to npm + the mirror.
+- Docs/metadata: correct the then-current README tool count after the toolkit expanded to full hosted-MCP parity. No code or behavioral change; version bump exists to publish the corrected README to npm + the mirror.
 
 ## 1.2.3 — 2026-07-07
 

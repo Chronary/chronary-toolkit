@@ -22,6 +22,9 @@ const ALL_SCHEMAS = {
   DeleteAgentSchema: schemas.DeleteAgentSchema,
   GetAvailabilitySchema: schemas.GetAvailabilitySchema,
   FindMeetingTimeSchema: schemas.FindMeetingTimeSchema,
+  CreateConnectionLinkSchema: schemas.CreateConnectionLinkSchema,
+  GetConnectionLinkSchema: schemas.GetConnectionLinkSchema,
+  CancelConnectionLinkSchema: schemas.CancelConnectionLinkSchema,
   GetCalendarContextSchema: schemas.GetCalendarContextSchema,
   CreateProposalSchema: schemas.CreateProposalSchema,
   ListProposalsSchema: schemas.ListProposalsSchema,
@@ -53,8 +56,8 @@ const ALL_SCHEMAS = {
 };
 
 describe('schemas', () => {
-  it('exports exactly 47 schemas', () => {
-    expect(Object.keys(ALL_SCHEMAS)).toHaveLength(47);
+  it('exports exactly 50 schemas', () => {
+    expect(Object.keys(ALL_SCHEMAS)).toHaveLength(50);
   });
 
   describe('every field has a .describe() annotation', () => {

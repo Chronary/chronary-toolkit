@@ -1,6 +1,6 @@
 # @chronary/toolkit
 
-AI-agent framework adapters for [Chronary](https://chronary.ai) — 47 calendar tools usable directly by Vercel AI SDK, LangChain, Mastra, OpenAI function calling, and MCP clients.
+AI-agent framework adapters for [Chronary](https://chronary.ai) — 50 calendar tools usable directly by Vercel AI SDK, LangChain, Mastra, OpenAI function calling, and MCP clients.
 
 ## Installation
 
@@ -101,7 +101,7 @@ your agent code
 api.chronary.ai (REST)
 ```
 
-Every adapter produces the same 47 calendar tools in the format the target framework expects. Tool definitions live in [`src/definitions.ts`](./src/definitions.ts); Zod schemas are in [`src/schemas.ts`](./src/schemas.ts).
+Every adapter produces the same 50 calendar tools in the format the target framework expects. Tool definitions live in [`src/definitions.ts`](./src/definitions.ts); Zod schemas are in [`src/schemas.ts`](./src/schemas.ts).
 
 ## Documentation
 

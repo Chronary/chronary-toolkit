@@ -43,6 +43,11 @@ export function mockChronaryClient() {
       forCalendar: vi.fn().mockResolvedValue(FIXTURES.availability),
       check: vi.fn().mockResolvedValue(FIXTURES.availability),
     },
+    connectionLinks: {
+      create: vi.fn().mockResolvedValue({ id: 'csl_1', calendar_id: 'cal_1', setup_url: 'https://setup.test', status: 'awaiting_human', expires_at: '2026-07-12T20:00:00Z' }),
+      get: vi.fn().mockResolvedValue({ id: 'csl_1', calendar_id: 'cal_1', status: 'completed', expires_at: '2026-07-12T20:00:00Z', connection_id: 'con_1' }),
+      cancel: vi.fn().mockResolvedValue(undefined),
+    },
     scheduling: {
       list: vi.fn().mockReturnValue(mockPage()),
       get: vi.fn().mockResolvedValue(FIXTURES.proposal),

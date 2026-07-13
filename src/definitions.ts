@@ -13,6 +13,9 @@ export const HOSTED_API_MCP_TOOL_NAMES = [
   'update_event',
   'get_availability',
   'find_meeting_time',
+  'create_connection_link',
+  'get_connection_link',
+  'cancel_connection_link',
   'cancel_event',
   'confirm_event',
   'release_event',
@@ -182,17 +185,38 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   // ── Availability ───────────────────────────────────────────────
   {
     name: 'get_availability',
-    description: 'Check when a single agent is free within a time range. Accepts `start`/`end` (preferred — matches the underlying availability service) or `start_time`/`end_time` (aliases that match the REST events schema).',
+    description: 'Check when a single agent is free across Chronary and authorized human calendars. This tool is fail-closed: always inspect availability_state and warnings before using slots.',
     schema: schemas.GetAvailabilitySchema,
     annotations: { title: 'Get Availability', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.getAvailability),
   },
   {
     name: 'find_meeting_time',
-    description: 'Find time slots when multiple agents are all free simultaneously. Accepts `agents`/`start`/`end` (preferred — matches the availability service) or `agent_ids`/`start_time`/`end_time` (aliases that match the REST/scheduling-proposal naming).',
+    description: 'Find time when multiple agents are free across Chronary and their authorized human calendars. This tool is fail-closed: always inspect availability_state and warnings before using slots.',
     schema: schemas.FindMeetingTimeSchema,
     annotations: { title: 'Find Meeting Time', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.findMeetingTime),
+  },
+  {
+    name: 'create_connection_link',
+    description: 'Request human setup of Google Calendar or Microsoft Outlook for a Chronary calendar. Give setup_url to a human; agents never receive provider credentials or event data. The secret URL is returned only once.',
+    schema: schemas.CreateConnectionLinkSchema,
+    annotations: { title: 'Create Human Calendar Setup Link', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    execute: createExecutor(fns.createConnectionLink),
+  },
+  {
+    name: 'get_connection_link',
+    description: 'Poll provider-neutral human-calendar setup status. The bearer setup URL and provider data are never returned by polling.',
+    schema: schemas.GetConnectionLinkSchema,
+    annotations: { title: 'Get Human Calendar Setup Status', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    execute: createExecutor(fns.getConnectionLink),
+  },
+  {
+    name: 'cancel_connection_link',
+    description: 'Cancel a pending human-calendar setup request and invalidate its setup URL.',
+    schema: schemas.CancelConnectionLinkSchema,
+    annotations: { title: 'Cancel Human Calendar Setup Link', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    execute: createExecutor(fns.cancelConnectionLink),
   },
 
   // ── Calendar context ───────────────────────────────────────────

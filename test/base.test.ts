@@ -19,8 +19,8 @@ class TestMapToolkit extends MapToolkit<string> {
 const config: ChronaryToolkitConfig = { apiKey: 'chr_sk_xxx123' };
 
 describe('TOOL_DEFINITIONS', () => {
-  it('has exactly 47 entries', () => {
-    expect(TOOL_DEFINITIONS).toHaveLength(47);
+  it('has exactly 50 entries', () => {
+    expect(TOOL_DEFINITIONS).toHaveLength(50);
   });
 
   it('every definition has required fields', () => {
@@ -39,17 +39,17 @@ describe('TOOL_DEFINITIONS', () => {
   });
 
   it('has exact tool-for-tool parity with the hosted API MCP server', () => {
-    expect(HOSTED_API_MCP_TOOL_NAMES).toHaveLength(47);
+    expect(HOSTED_API_MCP_TOOL_NAMES).toHaveLength(50);
     expect(TOOLKIT_MCP_PARITY.missingHostedTools).toEqual([]);
     expect(TOOLKIT_MCP_PARITY.toolkitOnlyTools).toEqual([]);
   });
 });
 
 describe('ListToolkit', () => {
-  it('returns all 47 tools as array', () => {
+  it('returns all 50 tools as array', () => {
     const toolkit = new TestListToolkit(config);
     const tools = toolkit.getTools();
-    expect(tools).toHaveLength(47);
+    expect(tools).toHaveLength(50);
     expect(Array.isArray(tools)).toBe(true);
   });
 
@@ -63,10 +63,10 @@ describe('ListToolkit', () => {
 });
 
 describe('MapToolkit', () => {
-  it('returns all 47 tools as record', () => {
+  it('returns all 50 tools as record', () => {
     const toolkit = new TestMapToolkit(config);
     const tools = toolkit.getTools();
-    expect(Object.keys(tools)).toHaveLength(47);
+    expect(Object.keys(tools)).toHaveLength(50);
     expect(tools['create_event']).toBe('create_event');
   });
 

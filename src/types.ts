@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import type { Chronary } from '@chronary/sdk';
 
-/** All 47 tool names exposed by the toolkit (tool-for-tool parity with the hosted MCP server) */
+/** All 50 tool names exposed by the toolkit (tool-for-tool parity with the hosted MCP server) */
 export type ToolName =
   | 'list_calendars'
   | 'get_calendar'
@@ -22,6 +22,9 @@ export type ToolName =
   | 'delete_agent'
   | 'get_availability'
   | 'find_meeting_time'
+  | 'create_connection_link'
+  | 'get_connection_link'
+  | 'cancel_connection_link'
   | 'get_calendar_context'
   | 'create_proposal'
   | 'list_proposals'
@@ -72,6 +75,9 @@ export const TOOL_NAMES: ToolName[] = [
   'delete_agent',
   'get_availability',
   'find_meeting_time',
+  'create_connection_link',
+  'get_connection_link',
+  'cancel_connection_link',
   'get_calendar_context',
   'create_proposal',
   'list_proposals',

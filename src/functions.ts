@@ -227,6 +227,23 @@ export const findMeetingTime = safeFunc(async (ctx: Ctx<{
   });
 });
 
+export const createConnectionLink = safeFunc(async (ctx: Ctx<{
+  calendar_id: string;
+  capabilities: Array<'availability' | 'publishing'>;
+  publication_policy?: 'none' | 'confirmed' | 'confirmed_tentative';
+}>) => {
+  const { calendar_id, ...params } = ctx.params;
+  return ctx.client.connectionLinks.create(calendar_id, params);
+});
+
+export const getConnectionLink = safeFunc(async (ctx: Ctx<{ connection_link_id: string }>) =>
+  ctx.client.connectionLinks.get(ctx.params.connection_link_id));
+
+export const cancelConnectionLink = safeFunc(async (ctx: Ctx<{ connection_link_id: string }>) => {
+  await ctx.client.connectionLinks.cancel(ctx.params.connection_link_id);
+  return { cancelled: true, id: ctx.params.connection_link_id };
+});
+
 // ── Calendar context ───────────────────────────────────────────
 
 export const getCalendarContext = safeFunc(async (ctx: Ctx<{ calendar_id: string }>) => {

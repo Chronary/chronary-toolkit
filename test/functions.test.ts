@@ -327,6 +327,17 @@ describe('tool functions', () => {
     expect(client.calendars.deleteAvailabilityRules).toHaveBeenCalledWith('cal_1');
   });
 
+  // ── Human calendar setup links ──
+
+  it('creates, gets, and cancels connection links', async () => {
+    await fns.createConnectionLink({ client: asClient(), params: { calendar_id: 'cal_1', capabilities: ['availability'], publication_policy: 'none' } });
+    expect(client.connectionLinks.create).toHaveBeenCalledWith('cal_1', { capabilities: ['availability'], publication_policy: 'none' });
+    await fns.getConnectionLink({ client: asClient(), params: { connection_link_id: 'csl_1' } });
+    expect(client.connectionLinks.get).toHaveBeenCalledWith('csl_1');
+    const cancelled = await fns.cancelConnectionLink({ client: asClient(), params: { connection_link_id: 'csl_1' } });
+    expect(cancelled).toEqual({ result: { cancelled: true, id: 'csl_1' }, isError: false });
+  });
+
   // ── Scoped keys ──
 
   it('createScopedKey passes params through', async () => {
