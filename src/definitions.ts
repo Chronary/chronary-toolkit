@@ -51,6 +51,10 @@ export const HOSTED_API_MCP_TOOL_NAMES = [
   'get_calendar',
   'update_calendar',
   'delete_calendar',
+  'create_booking_page',
+  'list_booking_pages',
+  'get_booking_page',
+  'delete_booking_page',
   'get_usage',
   'get_audit_log',
   'accept_terms',
@@ -92,6 +96,36 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     schema: schemas.DeleteCalendarSchema,
     annotations: { title: 'Delete Calendar', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.deleteCalendar),
+  },
+
+  // ── Booking pages ──────────────────────────────────────────────
+  {
+    name: 'create_booking_page',
+    description: 'Create a public booking page (Calendly-style scheduling link) for a calendar. Returns a booking_url to send to a human; when they pick a slot, a confirmed event is created on the calendar and an event.created webhook fires with a booking_page_id field. Set availability_constraints to restrict to weekly working hours; existing calendar events always block slots.',
+    schema: schemas.CreateBookingPageSchema,
+    annotations: { title: 'Create Booking Page', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    execute: createExecutor(fns.createBookingPage),
+  },
+  {
+    name: 'list_booking_pages',
+    description: 'List booking pages in the org. Agent-scoped keys see only pages on their own agent\'s calendars.',
+    schema: schemas.ListBookingPagesSchema,
+    annotations: { title: 'List Booking Pages', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    execute: createExecutor(fns.listBookingPages),
+  },
+  {
+    name: 'get_booking_page',
+    description: 'Fetch a single booking page by ID, including its public booking_url and settings.',
+    schema: schemas.GetBookingPageSchema,
+    annotations: { title: 'Get Booking Page', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    execute: createExecutor(fns.getBookingPage),
+  },
+  {
+    name: 'delete_booking_page',
+    description: 'Delete (deactivate) a booking page. Its hosted URL stops resolving; already-booked events are unaffected.',
+    schema: schemas.DeleteBookingPageSchema,
+    annotations: { title: 'Delete Booking Page', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    execute: createExecutor(fns.deleteBookingPage),
   },
 
   // ── Events ─────────────────────────────────────────────────────

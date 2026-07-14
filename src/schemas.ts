@@ -59,6 +59,38 @@ export const DeleteCalendarSchema = z.object({
   calendar_id: z.string().describe('Calendar ID to delete'),
 });
 
+// ── Booking pages ──────────────────────────────────────────────
+
+export const ListBookingPagesSchema = z.object({
+  limit: z.number().int().min(1).max(200).default(50).describe('Max results to return'),
+  offset: z.number().int().min(0).default(0).describe('Pagination offset'),
+});
+
+export const GetBookingPageSchema = z.object({
+  booking_page_id: z.string().describe('Booking page ID to fetch (bkp_...)'),
+});
+
+export const CreateBookingPageSchema = z.object({
+  calendar_id: z.string().describe('Calendar a booking resolves to (from create_calendar/list_calendars).'),
+  title: z.string().min(1).max(200).describe('Meeting title shown on the page.'),
+  description: z.string().max(2000).optional().describe('Optional description shown to the booker.'),
+  duration_minutes: z.number().int().min(5).max(480).optional().describe('Slot length in minutes (default 30).'),
+  buffer_minutes: z.number().int().min(0).max(120).optional().describe('Padding before/after existing events (default 0).'),
+  window_days: z.number().int().min(1).max(365).optional().describe('How far ahead bookings are allowed (default 14).'),
+  min_notice_minutes: z.number().int().min(0).max(40320).optional().describe('Minimum lead time before a bookable slot (default 0).'),
+  timezone: z.string().min(1).max(64).optional().describe('IANA timezone for display + working hours (default UTC).'),
+  availability_constraints: z
+    .record(z.string(), z.object({ start: z.string(), end: z.string() }))
+    .nullable()
+    .optional()
+    .describe('Weekly working hours, e.g. {"mon":{"start":"09:00","end":"17:00"}}. Omit/null for any time in the window.'),
+  active: z.boolean().optional().describe('Whether the page accepts bookings (default true).'),
+});
+
+export const DeleteBookingPageSchema = z.object({
+  booking_page_id: z.string().describe('Booking page ID to delete (bkp_...)'),
+});
+
 // ── Events ─────────────────────────────────────────────────────
 
 export const ListEventsSchema = z.object({

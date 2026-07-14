@@ -11,7 +11,7 @@ describe('LangChain adapter', () => {
   it('returns array of tools with name, description, schema, call', () => {
     const toolkit = new ChronaryToolkit(config);
     const tools = toolkit.getTools();
-    expect(tools).toHaveLength(50);
+    expect(tools).toHaveLength(54);
     for (const tool of tools) {
       expect(tool.name).toBeTruthy();
       expect(tool.description).toBeTruthy();

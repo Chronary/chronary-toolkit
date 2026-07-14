@@ -11,7 +11,7 @@ describe('OpenAI adapter', () => {
   it('returns ChatCompletionTool[] format', () => {
     const toolkit = new ChronaryToolkit(config);
     const tools = toolkit.getTools();
-    expect(tools).toHaveLength(50);
+    expect(tools).toHaveLength(54);
     for (const tool of tools) {
       expect(tool.type).toBe('function');
       expect(tool.function.name).toBeTruthy();
@@ -23,7 +23,7 @@ describe('OpenAI adapter', () => {
   it('toResponsesTools returns flatter format', () => {
     const toolkit = new ChronaryToolkit(config);
     const tools = toolkit.toResponsesTools();
-    expect(tools).toHaveLength(50);
+    expect(tools).toHaveLength(54);
     for (const tool of tools) {
       expect(tool.type).toBe('function');
       expect(tool.name).toBeTruthy();

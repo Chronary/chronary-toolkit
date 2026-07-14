@@ -59,6 +59,43 @@ export const deleteCalendar = safeFunc(async (ctx: Ctx<{ calendar_id: string }>)
   return undefined; // safeFunc normalizes to { success: true }
 });
 
+// ── Booking pages ──────────────────────────────────────────────
+
+export const listBookingPages = safeFunc(async (ctx: Ctx<{ limit?: number; offset?: number }>) => {
+  const { client, params } = ctx;
+  const iter = client.bookingPages.list({ limit: params.limit });
+  return fetchPage(iter, params.offset, params.limit);
+});
+
+export const getBookingPage = safeFunc(async (ctx: Ctx<{ booking_page_id: string }>) => {
+  return ctx.client.bookingPages.get(ctx.params.booking_page_id);
+});
+
+export const createBookingPage = safeFunc(async (ctx: Ctx<{
+  calendar_id: string; title: string; description?: string; duration_minutes?: number;
+  buffer_minutes?: number; window_days?: number; min_notice_minutes?: number; timezone?: string;
+  availability_constraints?: Record<string, { start: string; end: string }> | null; active?: boolean;
+}>) => {
+  const { client, params } = ctx;
+  return client.bookingPages.create({
+    calendar_id: params.calendar_id,
+    title: params.title,
+    description: params.description,
+    duration_minutes: params.duration_minutes,
+    buffer_minutes: params.buffer_minutes,
+    window_days: params.window_days,
+    min_notice_minutes: params.min_notice_minutes,
+    timezone: params.timezone,
+    availability_constraints: params.availability_constraints,
+    active: params.active,
+  });
+});
+
+export const deleteBookingPage = safeFunc(async (ctx: Ctx<{ booking_page_id: string }>) => {
+  await ctx.client.bookingPages.delete(ctx.params.booking_page_id);
+  return undefined; // safeFunc normalizes to { success: true }
+});
+
 // ── Events ─────────────────────────────────────────────────────
 
 export const listEvents = safeFunc(async (ctx: Ctx<{
