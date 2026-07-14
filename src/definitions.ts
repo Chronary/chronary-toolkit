@@ -101,7 +101,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   // ── Booking pages ──────────────────────────────────────────────
   {
     name: 'create_booking_page',
-    description: 'Create a public booking page (Calendly-style scheduling link) for a calendar. Returns a booking_url to send to a human; when they pick a slot, a confirmed event is created on the calendar and an event.created webhook fires with a booking_page_id field. Set availability_constraints to restrict to weekly working hours; existing calendar events always block slots.',
+    description: 'Create a public booking page (a hosted scheduling link) for a calendar. Returns a booking_url to send to a human; when they pick a slot, a confirmed event is created on the calendar and an event.created webhook fires with a booking_page_id field. Set availability_constraints to restrict to weekly working hours; existing calendar events always block slots.',
     schema: schemas.CreateBookingPageSchema,
     annotations: { title: 'Create Booking Page', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     execute: createExecutor(fns.createBookingPage),

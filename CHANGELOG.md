@@ -2,6 +2,10 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
+## 1.5.1 — 2026-07-14
+
+- Neutral wording for the `create_booking_page` tool description (no competitor references). No behavioral change.
+
 ## 1.5.0 — 2026-07-14
 
 - Add `create_booking_page`, `list_booking_pages`, `get_booking_page`, and `delete_booking_page` for agent-created public scheduling links — full 54-tool hosted-MCP parity (#1036).
