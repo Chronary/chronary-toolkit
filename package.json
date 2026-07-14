@@ -1,6 +1,6 @@
 {
   "name": "@chronary/toolkit",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "AI agent framework adapters for Chronary calendar tools",
   "license": "Apache-2.0",
   "type": "module",

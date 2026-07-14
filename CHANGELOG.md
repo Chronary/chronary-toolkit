@@ -2,6 +2,10 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
+## 1.5.2 — 2026-07-14
+
+- Align the `get_availability`, `find_meeting_time`, `create_connection_link`, `get_connection_link`, and `cancel_connection_link` tool descriptions (and the `capabilities`/`publication_policy` params) with the richer hosted-MCP wording — zero drift across transports. No behavioral change; still 54 tools.
+
 ## 1.5.1 — 2026-07-14
 
 - Neutral wording for the `create_booking_page` tool description (no competitor references). No behavioral change.

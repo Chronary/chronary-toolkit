@@ -211,8 +211,8 @@ export const FindMeetingTimeSchema = z.object({
 
 export const CreateConnectionLinkSchema = z.object({
   calendar_id: z.string().startsWith('cal_').describe('Chronary calendar whose owning agent will receive authorized availability'),
-  capabilities: z.array(z.enum(['availability', 'publishing'])).min(1).max(2).default(['availability']).describe('Request opaque availability and optional publishing permission'),
-  publication_policy: z.enum(['none', 'confirmed', 'confirmed_tentative']).default('none').describe('Desired event publishing policy; a human still selects the destination'),
+  capabilities: z.array(z.enum(['availability', 'publishing'])).min(1).max(2).default(['availability']).describe('Request opaque availability, plus optional opt-in event publishing permission'),
+  publication_policy: z.enum(['none', 'confirmed', 'confirmed_tentative']).default('none').describe('Desired publishing policy; a human still chooses the destination'),
 });
 
 export const GetConnectionLinkSchema = z.object({
