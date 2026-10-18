@@ -401,7 +401,7 @@ export const SubscribeICalSchema = z.object({
 export const UpdateICalSubscriptionSchema = z.object({
   subscription_id: z.string().describe('iCal subscription ID to update'),
   label: z.string().min(1).max(255).optional().describe('New label for this subscription'),
-  url: z.string().url().startsWith('https://', 'URL must use HTTPS').optional().describe('New HTTPS URL of the iCal feed (.ics)'),
+  url: z.string().url().refine((u) => u.startsWith('https://'), 'URL must use HTTPS').optional().describe('New HTTPS URL of the iCal feed (.ics)'),
 });
 
 export const DeleteICalSubscriptionSchema = z.object({

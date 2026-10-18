@@ -2,6 +2,10 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
+## 1.5.3 — 2026-10-18
+
+- `update_ical_subscription`: the `url` parameter's JSON Schema declares `format: "uri"` again. Under zod 4, the HTTPS `.startsWith()` check had replaced it with a non-standard `starts_with`. Validation is unchanged, and there are still 54 tools (#1117).
+
 ## 1.5.2 — 2026-07-14
 
 - Align the `get_availability`, `find_meeting_time`, `create_connection_link`, `get_connection_link`, and `cancel_connection_link` tool descriptions (and the `capabilities`/`publication_policy` params) with the richer hosted-MCP wording — zero drift across transports. No behavioral change; still 54 tools.

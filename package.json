@@ -1,6 +1,6 @@
 {
   "name": "@chronary/toolkit",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "AI agent framework adapters for Chronary calendar tools",
   "license": "Apache-2.0",
   "type": "module",
@@ -111,13 +111,13 @@
   },
   "dependencies": {
     "@chronary/sdk": "workspace:*",
-    "zod": "^4.4",
+    "zod": "^4.6",
     "zod-to-json-schema": "^3.24.0"
   },
   "devDependencies": {
     "tsup": "^8.0.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "vitest": "^5.0.3"
   },
   "peerDependencies": {
     "@langchain/core": ">=0.3.0",
