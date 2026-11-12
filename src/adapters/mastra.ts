@@ -34,7 +34,7 @@ export class ChronaryToolkit extends MapToolkit<MastraTool> {
       inputSchema: def.schema,
       execute: async ({ context }: { context: Record<string, unknown> }) => {
         const result = await def.execute(client, context);
-        if (result.isError) throw new Error(result.result as string);
+        if (result.isError) throw new Error(typeof result.result === 'string' ? result.result : JSON.stringify(result.result));
         return result.result;
       },
     };

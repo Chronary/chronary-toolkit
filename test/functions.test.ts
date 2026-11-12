@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import type { Chronary } from '@chronary/sdk';
+import { PlanRequiredError, type Chronary } from '@chronary/sdk';
 import { mockChronaryClient, FIXTURES } from './helpers';
 import * as fns from '../src/functions';
 
@@ -131,6 +131,17 @@ describe('tool functions', () => {
     } });
     expect(client.events.list).toHaveBeenCalledWith(expect.objectContaining({
       calendarId: 'cal_1', start_after: '2026-04-01T00:00:00Z', start_before: '2026-05-01T00:00:00Z', expand: true,
+    }));
+  });
+
+  it('listOrgEvents maps calendar_ids and filters onto events.listAll', async () => {
+    const result = await fns.listOrgEvents({ client: asClient(), params: {
+      calendar_ids: ['cal_1', 'cal_2'], agent_id: 'agt_1', q: 'standup',
+      start_after: '2026-04-01T00:00:00Z', start_before: '2026-04-15T00:00:00Z', limit: 20,
+    } });
+    expect(result.isError).toBe(false);
+    expect(client.events.listAll).toHaveBeenCalledWith(expect.objectContaining({
+      calendar_id: ['cal_1', 'cal_2'], agent_id: 'agt_1', q: 'standup', limit: 20,
     }));
   });
 
@@ -389,6 +400,37 @@ describe('tool functions', () => {
     expect(client.webhooks.listDeliveries).toHaveBeenCalledWith('wh_1', expect.objectContaining({ limit: 10 }));
   });
 
+  it('listWebhookDeliveries forwards the #1200 filters and cursor', async () => {
+    await fns.listWebhookDeliveries({
+      client: asClient(),
+      params: { webhook_id: 'wh_1', status: 'dropped', event_type: 'event.', is_test: false, cursor: 'abc' },
+    });
+    expect(client.webhooks.listDeliveries).toHaveBeenCalledWith('wh_1', {
+      status: 'dropped',
+      event_type: 'event.',
+      is_test: false,
+      cursor: 'abc',
+    });
+  });
+
+  it('getWebhookDelivery passes webhook_id and delivery_id', async () => {
+    const result = await fns.getWebhookDelivery({ client: asClient(), params: { webhook_id: 'wh_1', delivery_id: 'whd_1' } });
+    expect(client.webhooks.getDelivery).toHaveBeenCalledWith('wh_1', 'whd_1');
+    expect(result.isError).toBe(false);
+  });
+
+  it('sendTestWebhook passes webhook_id and event_type', async () => {
+    const result = await fns.sendTestWebhook({ client: asClient(), params: { webhook_id: 'wh_1', event_type: 'event.created' } });
+    expect(client.webhooks.sendTest).toHaveBeenCalledWith('wh_1', { event_type: 'event.created' });
+    expect(result.isError).toBe(false);
+  });
+
+  it('replayWebhookDelivery passes webhook_id and delivery_id', async () => {
+    const result = await fns.replayWebhookDelivery({ client: asClient(), params: { webhook_id: 'wh_1', delivery_id: 'whd_1' } });
+    expect(client.webhooks.replayDelivery).toHaveBeenCalledWith('wh_1', 'whd_1');
+    expect(result.isError).toBe(false);
+  });
+
   // ── iCal Subscriptions ──
 
   it('subscribeICal passes agent_id as positional arg', async () => {
@@ -404,11 +446,68 @@ describe('tool functions', () => {
     expect(client.icalSubscriptions.sync).toHaveBeenCalledWith('ics_1');
   });
 
+  it('pauseICalSubscription and resumeICalSubscription call pause / resume', async () => {
+    expect((await fns.pauseICalSubscription({ client: asClient(), params: { subscription_id: 'ics_1' } })).isError).toBe(false);
+    expect(client.icalSubscriptions.pause).toHaveBeenCalledWith('ics_1');
+    expect((await fns.resumeICalSubscription({ client: asClient(), params: { subscription_id: 'ics_1' } })).isError).toBe(false);
+    expect(client.icalSubscriptions.resume).toHaveBeenCalledWith('ics_1');
+  });
+
   // ── Usage ──
 
   it('getUsage calls client.usage.get()', async () => {
     const result = await fns.getUsage({ client: asClient(), params: {} });
     expect(result.isError).toBe(false);
     expect(client.usage.get).toHaveBeenCalled();
+  });
+
+  it('getUsageHistory calls client.usage.history() with the months param', async () => {
+    const result = await fns.getUsageHistory({ client: asClient(), params: { months: 3 } });
+    expect(result.isError).toBe(false);
+    expect(client.usage.history).toHaveBeenCalledWith({ months: 3 });
+  });
+
+  // ── Billing ──
+
+  it('getBilling calls client.billing.get()', async () => {
+    const result = await fns.getBilling({ client: asClient(), params: {} });
+    expect(result.isError).toBe(false);
+    expect(client.billing.get).toHaveBeenCalled();
+    expect(result.result).toMatchObject({ plan: 'free-agent' });
+  });
+
+  it('requestUpgrade forwards params to billing.upgradeRequests.create', async () => {
+    const result = await fns.requestUpgrade({ client: asClient(), params: { interval: 'year', reason: 'need more', metric: 'events' } });
+    expect(result.isError).toBe(false);
+    expect(client.billing.upgradeRequests.create).toHaveBeenCalledWith({ interval: 'year', reason: 'need more', metric: 'events' });
+    expect(result.result).toMatchObject({ id: 'upr_1', approval_url: expect.stringContaining('upr_1') });
+  });
+
+  it('getUpgradeRequest calls billing.upgradeRequests.get', async () => {
+    const result = await fns.getUpgradeRequest({ client: asClient(), params: { id: 'upr_1' } });
+    expect(result.isError).toBe(false);
+    expect(client.billing.upgradeRequests.get).toHaveBeenCalledWith('upr_1');
+  });
+
+  it('cancelUpgradeRequest calls billing.upgradeRequests.cancel', async () => {
+    const result = await fns.cancelUpgradeRequest({ client: asClient(), params: { id: 'upr_1' } });
+    expect(result.isError).toBe(false);
+    expect(client.billing.upgradeRequests.cancel).toHaveBeenCalledWith('upr_1');
+    expect(result.result).toMatchObject({ status: 'canceled' });
+  });
+
+  it('billing tools surface plan errors as structured results', async () => {
+    client.billing.upgradeRequests.create.mockRejectedValueOnce(
+      new PlanRequiredError('Pro required', 'req_1', undefined, {
+        type: 'plan_required', required_plan: 'pro', feature: 'scoped_keys',
+        upgrade_url: 'https://console.test/settings/billing', docs_url: 'https://docs.test/plans',
+      }),
+    );
+    const result = await fns.requestUpgrade({ client: asClient(), params: {} });
+    expect(result.isError).toBe(true);
+    expect(result.result).toEqual({
+      error: 'plan_required', message: 'Pro required', upgrade_url: 'https://console.test/settings/billing',
+      docs_url: 'https://docs.test/plans', required_plan: 'pro', feature: 'scoped_keys',
+    });
   });
 });

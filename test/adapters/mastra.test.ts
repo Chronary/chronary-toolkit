@@ -8,10 +8,10 @@ vi.mock('@chronary/sdk', () => ({
 const config = { apiKey: 'chr_sk_xxx123' };
 
 describe('Mastra adapter', () => {
-  it('returns Record<string, MastraTool> with all 54 tools', () => {
+  it('returns Record<string, MastraTool> with all 65 tools', () => {
     const toolkit = new ChronaryToolkit(config);
     const tools = toolkit.getTools();
-    expect(Object.keys(tools)).toHaveLength(54);
+    expect(Object.keys(tools)).toHaveLength(65);
   });
 
   it('each tool has id, description, inputSchema, execute', () => {

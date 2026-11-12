@@ -1,4 +1,4 @@
-import type { Chronary } from '@chronary/sdk';
+import type { Chronary, KeyExpiresIn, ListAuditLogParams } from '@chronary/sdk';
 import { safeFunc } from './safe';
 import type { ToolResult } from './types';
 
@@ -114,6 +114,26 @@ export const listEvents = safeFunc(async (ctx: Ctx<{
     start_before: params.start_before,
     status: params.status,
     source: params.source,
+    expand: params.expand,
+    limit: params.limit,
+  });
+  return fetchPage(iter, params.offset, params.limit);
+});
+
+export const listOrgEvents = safeFunc(async (ctx: Ctx<{
+  calendar_ids?: string[]; agent_id?: string; start_after?: string; start_before?: string;
+  status?: 'confirmed' | 'tentative' | 'cancelled' | 'hold'; source?: 'internal' | 'external_ical';
+  q?: string; expand?: boolean; limit?: number; offset?: number;
+}>) => {
+  const { client, params } = ctx;
+  const iter = client.events.listAll({
+    calendar_id: params.calendar_ids,
+    agent_id: params.agent_id,
+    start_after: params.start_after,
+    start_before: params.start_before,
+    status: params.status,
+    source: params.source,
+    q: params.q,
     expand: params.expand,
     limit: params.limit,
   });
@@ -365,7 +385,7 @@ export const clearAvailabilityRules = safeFunc(async (ctx: Ctx<{ calendar_id: st
 
 // ── Scoped keys ────────────────────────────────────────────────
 
-export const createScopedKey = safeFunc(async (ctx: Ctx<{ agent_id: string; label?: string }>) => {
+export const createScopedKey = safeFunc(async (ctx: Ctx<{ agent_id: string; label?: string; expires_in?: KeyExpiresIn }>) => {
   return ctx.client.keys.create(ctx.params);
 });
 
@@ -409,18 +429,30 @@ export const deleteWebhook = safeFunc(async (ctx: Ctx<{ webhook_id: string }>) =
 
 export const listWebhookDeliveries = safeFunc(async (ctx: Ctx<{
   webhook_id: string; limit?: number; offset?: number;
-  status?: 'pending' | 'delivered' | 'failed'; include_payload?: boolean;
+  status?: 'pending' | 'delivered' | 'failed' | 'dropped'; include_payload?: boolean;
+  event_type?: string; created_after?: string; created_before?: string;
+  delivery_id?: string; is_test?: boolean; cursor?: string;
 }>) => {
   const { client, params } = ctx;
   const { webhook_id, ...query } = params;
   return client.webhooks.listDeliveries(webhook_id, query);
 });
 
+export const getWebhookDelivery = safeFunc(async (ctx: Ctx<{ webhook_id: string; delivery_id: string }>) => {
+  return ctx.client.webhooks.getDelivery(ctx.params.webhook_id, ctx.params.delivery_id);
+});
+
+export const sendTestWebhook = safeFunc(async (ctx: Ctx<{ webhook_id: string; event_type: string }>) => {
+  return ctx.client.webhooks.sendTest(ctx.params.webhook_id, { event_type: ctx.params.event_type });
+});
+
+export const replayWebhookDelivery = safeFunc(async (ctx: Ctx<{ webhook_id: string; delivery_id: string }>) => {
+  return ctx.client.webhooks.replayDelivery(ctx.params.webhook_id, ctx.params.delivery_id);
+});
+
 // ── Audit log ──────────────────────────────────────────────────
 
-export const getAuditLog = safeFunc(async (ctx: Ctx<{
-  from?: string; to?: string; action?: string; actor_key_prefix?: string; cursor?: string; limit?: number;
-}>) => {
+export const getAuditLog = safeFunc(async (ctx: Ctx<ListAuditLogParams>) => {
   return ctx.client.auditLog.list(ctx.params);
 });
 
@@ -473,10 +505,44 @@ export const syncICalSubscription = safeFunc(async (ctx: Ctx<{ subscription_id: 
   return ctx.client.icalSubscriptions.sync(ctx.params.subscription_id);
 });
 
+export const pauseICalSubscription = safeFunc(async (ctx: Ctx<{ subscription_id: string }>) => {
+  return ctx.client.icalSubscriptions.pause(ctx.params.subscription_id);
+});
+
+export const resumeICalSubscription = safeFunc(async (ctx: Ctx<{ subscription_id: string }>) => {
+  return ctx.client.icalSubscriptions.resume(ctx.params.subscription_id);
+});
+
 // ── Usage ──────────────────────────────────────────────────────
 
 export const getUsage = safeFunc(async (ctx: Ctx) => {
   return ctx.client.usage.get();
+});
+
+export const getUsageHistory = safeFunc(async (ctx: Ctx<{ months?: number }>) => {
+  return ctx.client.usage.history({ months: ctx.params.months });
+});
+
+// ── Billing ────────────────────────────────────────────────────
+// Read-only for agents: a summary plus "ask your human to upgrade". Agents
+// cannot pay, cancel, or change payment methods.
+
+export const getBilling = safeFunc(async (ctx: Ctx) => {
+  return ctx.client.billing.get();
+});
+
+export const requestUpgrade = safeFunc(async (ctx: Ctx<{
+  interval?: 'month' | 'year'; reason?: string; feature?: string; metric?: string;
+}>) => {
+  return ctx.client.billing.upgradeRequests.create(ctx.params);
+});
+
+export const getUpgradeRequest = safeFunc(async (ctx: Ctx<{ id: string }>) => {
+  return ctx.client.billing.upgradeRequests.get(ctx.params.id);
+});
+
+export const cancelUpgradeRequest = safeFunc(async (ctx: Ctx<{ id: string }>) => {
+  return ctx.client.billing.upgradeRequests.cancel(ctx.params.id);
 });
 
 // ── Factory ────────────────────────────────────────────────────

@@ -2,6 +2,8 @@ import { z, type ZodRawShape } from 'zod';
 import { ListToolkit } from '../base';
 import type { ToolDefinition, ChronaryToolkitConfig, ToolResult, ToolAnnotations } from '../types';
 
+export { MCP_SERVER_INSTRUCTIONS } from '../instructions';
+
 export interface McpToolDefinition {
   name: string;
   description: string;
@@ -89,10 +91,11 @@ iCal feeds, and receive webhooks.
 3. \`create_event\` / \`get_availability\` / \`find_meeting_time\` — schedule and coordinate.
 
 ## Keys & plans
-Org keys (\`chr_sk_\`) can use every tool; agent-scoped keys (\`chr_ak_\`) are
+Organization keys (\`chr_sk_\`) can use every tool; Agent keys (\`chr_ak_\`) are
 limited to their own agent and cannot use org-only tools such as
-\`create_agent\` or \`find_meeting_time\`. Temporal holds, cross-agent
-availability, and scheduling proposals require a Pro plan.`;
+\`create_agent\` or \`find_meeting_time\`. Scoped keys, cross-agent availability,
+webhook delivery replay and secret rotation require a Developer or Pro plan;
+scheduling proposals and temporal holds require Pro.`;
 
 /**
  * MCP v1.x adapter.
@@ -199,7 +202,7 @@ export class ChronaryToolkit extends ListToolkit<McpToolDefinition> {
             role: 'user',
             content: {
               type: 'text',
-              text: `Find a ${duration} slot that works for all of these agents: ${agent_ids}${window ? ` within ${window}` : ''}. Call the find_meeting_time tool (agents, duration, and start/end if a window is given). Present the top few candidate slots and ask which to book before calling create_event. (find_meeting_time requires a Pro plan.)`,
+              text: `Find a ${duration} slot that works for all of these agents: ${agent_ids}${window ? ` within ${window}` : ''}. Call the find_meeting_time tool (agents, duration, and start/end if a window is given). Present the top few candidate slots and ask which to book before calling create_event. (find_meeting_time requires a Developer or Pro plan.)`,
             },
           },
         ],
@@ -246,7 +249,7 @@ export class ChronaryToolkit extends ListToolkit<McpToolDefinition> {
             role: 'user',
             content: {
               type: 'text',
-              text: `Create a scheduling proposal "${title}" organized by ${organizer_agent_id} for participants ${participant_agent_ids}. First use get_availability / find_meeting_time to pick 2-3 candidate slots, then call create_proposal with those slots. Report the proposal ID. (Scheduling proposals require a Pro plan and an org-level key.)`,
+              text: `Create a scheduling proposal "${title}" organized by ${organizer_agent_id} for participants ${participant_agent_ids}. First use get_availability / find_meeting_time to pick 2-3 candidate slots, then call create_proposal with those slots. Report the proposal ID. (Scheduling proposals require a Pro plan and an Organization key.)`,
             },
           },
         ],

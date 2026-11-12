@@ -28,6 +28,7 @@ export function mockChronaryClient() {
     },
     events: {
       list: vi.fn().mockReturnValue(mockPage()),
+      listAll: vi.fn().mockReturnValue(mockPage()),
       get: vi.fn().mockResolvedValue(FIXTURES.event),
       getById: vi.fn().mockResolvedValue(FIXTURES.event),
       create: vi.fn().mockResolvedValue(FIXTURES.event),
@@ -63,6 +64,9 @@ export function mockChronaryClient() {
       update: vi.fn().mockResolvedValue(FIXTURES.webhook),
       delete: vi.fn().mockResolvedValue(undefined),
       listDeliveries: vi.fn().mockResolvedValue(FIXTURES.webhookDeliveries),
+      getDelivery: vi.fn().mockResolvedValue({ id: 'whd_1', attempt_log: [] }),
+      sendTest: vi.fn().mockResolvedValue({ delivery_id: 'whd_t', is_test: true }),
+      replayDelivery: vi.fn().mockResolvedValue({ delivery_id: 'whd_r', replay_of_delivery_id: 'whd_1' }),
     },
     icalSubscriptions: {
       list: vi.fn().mockReturnValue(mockPage()),
@@ -71,6 +75,8 @@ export function mockChronaryClient() {
       update: vi.fn().mockResolvedValue(FIXTURES.icalSubscription),
       delete: vi.fn().mockResolvedValue(undefined),
       sync: vi.fn().mockResolvedValue({ status: 'syncing' }),
+      pause: vi.fn().mockResolvedValue(FIXTURES.icalSubscription),
+      resume: vi.fn().mockResolvedValue(FIXTURES.icalSubscription),
     },
     keys: {
       list: vi.fn().mockResolvedValue([FIXTURES.scopedKey]),
@@ -85,6 +91,15 @@ export function mockChronaryClient() {
     },
     usage: {
       get: vi.fn().mockResolvedValue(FIXTURES.usage),
+      history: vi.fn().mockResolvedValue({ plan: 'free', months: 6, limits: {}, data: [] }),
+    },
+    billing: {
+      get: vi.fn().mockResolvedValue({ plan: 'free-agent', self_serve_upgrade: true, pending_upgrade_request: null }),
+      upgradeRequests: {
+        create: vi.fn().mockResolvedValue({ id: 'upr_1', status: 'pending', approval_url: 'https://console.test/settings/billing/requests/upr_1' }),
+        get: vi.fn().mockResolvedValue({ id: 'upr_1', status: 'completed', approval_url: null }),
+        cancel: vi.fn().mockResolvedValue({ id: 'upr_1', status: 'canceled', approval_url: null }),
+      },
     },
   };
 }

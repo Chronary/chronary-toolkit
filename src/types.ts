@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import type { Chronary } from '@chronary/sdk';
 
-/** All 54 tool names exposed by the toolkit (tool-for-tool parity with the hosted MCP server) */
+/** All 65 tool names exposed by the toolkit (tool-for-tool parity with the hosted MCP server) */
 export type ToolName =
   | 'list_calendars'
   | 'get_calendar'
@@ -13,6 +13,7 @@ export type ToolName =
   | 'get_booking_page'
   | 'delete_booking_page'
   | 'list_events'
+  | 'list_org_events'
   | 'get_event'
   | 'create_event'
   | 'update_event'
@@ -45,18 +46,28 @@ export type ToolName =
   | 'update_webhook'
   | 'delete_webhook'
   | 'list_webhook_deliveries'
+  | 'get_webhook_delivery'
+  | 'send_test_webhook'
+  | 'replay_webhook_delivery'
   | 'list_ical_subscriptions'
   | 'get_ical_subscription'
   | 'subscribe_ical'
   | 'update_ical_subscription'
   | 'delete_ical_subscription'
   | 'sync_ical_subscription'
+  | 'pause_ical_subscription'
+  | 'resume_ical_subscription'
   | 'create_scoped_key'
   | 'list_scoped_keys'
   | 'revoke_scoped_key'
   | 'get_audit_log'
   | 'accept_terms'
-  | 'get_usage';
+  | 'get_usage'
+  | 'get_usage_history'
+  | 'get_billing'
+  | 'request_upgrade'
+  | 'get_upgrade_request'
+  | 'cancel_upgrade_request';
 
 /** All tool names as a runtime array */
 export const TOOL_NAMES: ToolName[] = [
@@ -70,6 +81,7 @@ export const TOOL_NAMES: ToolName[] = [
   'get_booking_page',
   'delete_booking_page',
   'list_events',
+  'list_org_events',
   'get_event',
   'create_event',
   'update_event',
@@ -102,18 +114,28 @@ export const TOOL_NAMES: ToolName[] = [
   'update_webhook',
   'delete_webhook',
   'list_webhook_deliveries',
+  'get_webhook_delivery',
+  'send_test_webhook',
+  'replay_webhook_delivery',
   'list_ical_subscriptions',
   'get_ical_subscription',
   'subscribe_ical',
   'update_ical_subscription',
   'delete_ical_subscription',
   'sync_ical_subscription',
+  'pause_ical_subscription',
+  'resume_ical_subscription',
   'create_scoped_key',
   'list_scoped_keys',
   'revoke_scoped_key',
   'get_audit_log',
   'accept_terms',
   'get_usage',
+  'get_usage_history',
+  'get_billing',
+  'request_upgrade',
+  'get_upgrade_request',
+  'cancel_upgrade_request',
 ];
 
 /** MCP-compatible tool annotations */
@@ -137,6 +159,13 @@ export interface ToolDefinition {
   description: string;
   schema: z.ZodObject<z.ZodRawShape>;
   annotations: ToolAnnotations;
+  /**
+   * Result fields that may hold text written by someone outside the org (a
+   * booking-page booker, a webhook receiver). When set, a successful object
+   * result starts with an `untrusted_fields` key naming them, so the model
+   * treats those values as data, never as instructions.
+   */
+  untrustedFields?: readonly string[];
   execute: (client: Chronary, params: Record<string, unknown>) => Promise<ToolResult>;
 }
 

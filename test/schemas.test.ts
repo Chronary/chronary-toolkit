@@ -53,11 +53,15 @@ const ALL_SCHEMAS = {
   GetAuditLogSchema: schemas.GetAuditLogSchema,
   AcceptTermsSchema: schemas.AcceptTermsSchema,
   GetUsageSchema: schemas.GetUsageSchema,
+  GetBillingSchema: schemas.GetBillingSchema,
+  RequestUpgradeSchema: schemas.RequestUpgradeSchema,
+  GetUpgradeRequestSchema: schemas.GetUpgradeRequestSchema,
+  CancelUpgradeRequestSchema: schemas.CancelUpgradeRequestSchema,
 };
 
 describe('schemas', () => {
-  it('exports exactly 50 schemas', () => {
-    expect(Object.keys(ALL_SCHEMAS)).toHaveLength(50);
+  it('exports exactly 54 schemas', () => {
+    expect(Object.keys(ALL_SCHEMAS)).toHaveLength(54);
   });
 
   describe('every field has a .describe() annotation', () => {
@@ -113,6 +117,25 @@ describe('schemas', () => {
         end: '2026-04-16T00:00:00Z',
       });
       expect(result.success).toBe(false);
+    });
+
+    it('RequestUpgradeSchema accepts an empty object and rejects bad interval / long reason', () => {
+      expect(schemas.RequestUpgradeSchema.safeParse({}).success).toBe(true);
+      expect(schemas.RequestUpgradeSchema.safeParse({ interval: 'year', reason: 'x' }).success).toBe(true);
+      expect(schemas.RequestUpgradeSchema.safeParse({ interval: 'week' }).success).toBe(false);
+      expect(schemas.RequestUpgradeSchema.safeParse({ reason: 'x'.repeat(501) }).success).toBe(false);
+    });
+
+    it('GetUpgradeRequestSchema requires id', () => {
+      expect(schemas.GetUpgradeRequestSchema.safeParse({}).success).toBe(false);
+      expect(schemas.GetUpgradeRequestSchema.safeParse({ id: 'upr_1' }).success).toBe(true);
+    });
+
+    it('GetAuditLogSchema resource accepts ids with - and _, and prefixes (#1325)', () => {
+      expect(schemas.GetAuditLogSchema.safeParse({ resource: 'evt_ab-cd_Ef12' }).success).toBe(true);
+      expect(schemas.GetAuditLogSchema.safeParse({ resource: 'cal_' }).success).toBe(true);
+      expect(schemas.GetAuditLogSchema.safeParse({ resource: 'cal_ x' }).success).toBe(false);
+      expect(schemas.GetAuditLogSchema.safeParse({ resource: 'cal_%' }).success).toBe(false);
     });
 
     it('GetUsageSchema accepts empty object', () => {

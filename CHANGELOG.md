@@ -2,6 +2,28 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
+## Unreleased
+
+- Static MCP instructions and tool descriptions now use the Developer-plan wording: scoped keys, cross-agent availability, webhook delivery replay and secret rotation require a Developer or Pro plan; scheduling proposals and temporal holds stay Pro.
+
+## 1.6.1 — 2026-11-09
+
+- Tool input schemas now carry the API's length limits: event `description` at most 10,000 characters, agent `description` at most 5,000, webhook and iCal subscription `url` at most 2,048, and calendar `timezone` at most 64 (#1672).
+
+## 1.6.0 — 2026-10-19
+
+- Add `get_billing`, `request_upgrade`, `get_upgrade_request` and `cancel_upgrade_request` tools (58 tools total) so an agent can ask its human to upgrade when it hits a plan limit (#1129).
+- Tool errors are now structured objects (`{error, message, upgrade_url?, docs_url?, required_plan?, feature?, metric?, limit?}`) instead of a flattened string. The AI SDK and Mastra adapters throw an `Error` whose message is that JSON.
+- Add the `org.plan_changed` webhook event type: fires once when the account's plan changes, so agents don't have to poll billing (#1130).
+- Add the `calendar_connection.reauthorization_required` webhook event type: fires once when a connected human calendar stops accepting access, so agents learn their availability now fails closed (#1196).
+- Add the `get_webhook_delivery` tool (59 tools total): one webhook delivery with every attempt's HTTP status, duration, response body prefix and error code (#1200).
+- `list_webhook_deliveries` takes `event_type` (exact, or a prefix ending in a dot such as `event.`), `created_after`, `created_before`, `delivery_id`, `is_test` and `cursor`, and its `status` filter gains `dropped` (a Free-plan delivery the monthly limit stopped) (#1200).
+- Add the `send_test_webhook` tool (63 tools total): sends a signed sample event to a webhook endpoint once, quota-exempt, with the `X-Chronary-Test: 1` header (#1200).
+- Add the `list_org_events` tool (64 tools total): events across all of the organization's calendars in one call, filtered by calendars, agent, window, status and source, with case-insensitive title search inside a window of at most 31 days (#1202).
+- Add the `replay_webhook_delivery` tool (65 tools total, Pro): sends a failed or dropped webhook delivery again as a new delivery, with an `X-Chronary-Replay-Of` header naming the original. It counts toward the monthly delivery quota (#588).
+- Results of `list_events`, `list_org_events`, `get_event`, `update_event`, `cancel_event`, `confirm_event` and `get_calendar_context` start with `untrusted_fields: ["title", "description", "metadata"]`, and those of `list_webhook_deliveries` and `get_webhook_delivery` with `untrusted_fields: ["payload", "response_body"]`: fields that may hold text written outside the org (a booking-page booker, a webhook receiver), which the model must treat as data. New exports: `MCP_SERVER_INSTRUCTIONS` (also from `@chronary/toolkit/mcp`), `EVENT_UNTRUSTED_FIELDS`, `WEBHOOK_DELIVERY_UNTRUSTED_FIELDS`, `withUntrustedFields`, and `ToolDefinition.untrustedFields` (#1621).
+- Annotations: `create_webhook`, `update_webhook` and `update_ical_subscription` set `openWorldHint: true` (they make Chronary contact a URL you supply), and `update_webhook` sets `destructiveHint: true`. They now match the hosted MCP server exactly (#1662).
+
 ## 1.5.3 — 2026-10-18
 
 - `update_ical_subscription`: the `url` parameter's JSON Schema declares `format: "uri"` again. Under zod 4, the HTTPS `.startsWith()` check had replaced it with a non-standard `starts_with`. Validation is unchanged, and there are still 54 tools (#1117).
