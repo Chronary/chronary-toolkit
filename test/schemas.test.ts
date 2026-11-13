@@ -224,6 +224,15 @@ describe('schemas', () => {
       expect(schemas.CancelEventSchema.safeParse({ event_id: 'evt_1', occurrence_start: 'not-a-date' }).success).toBe(false);
     });
 
+    it('date-time inputs accept a numeric UTC offset as well as Z (#1989)', () => {
+      for (const v of ['2026-11-20T17:00:00Z', '2026-11-20T09:00:00-08:00', '2026-11-20T22:30:00+05:30', '2026-11-20T17:00:00+00:00']) {
+        expect(schemas.CreateEventSchema.safeParse({ calendar_id: 'cal_1', title: 't', start_time: v, end_time: v }).success).toBe(true);
+        expect(schemas.ListEventsSchema.safeParse({ calendar_id: 'cal_1', start_after: v }).success).toBe(true);
+      }
+      expect(schemas.CreateEventSchema.safeParse({ calendar_id: 'cal_1', title: 't', start_time: '2026-11-20T17:00:00', end_time: '2026-11-20T18:00:00Z' }).success).toBe(false);
+      expect(schemas.CreateEventSchema.safeParse({ calendar_id: 'cal_1', title: 't', start_time: 'tomorrow', end_time: '2026-11-20T18:00:00Z' }).success).toBe(false);
+    });
+
     it('UpdateCalendarSchema accepts agent_status', () => {
       const result = schemas.UpdateCalendarSchema.safeParse({ calendar_id: 'cal_1', agent_status: 'waiting' });
       expect(result.success).toBe(true);

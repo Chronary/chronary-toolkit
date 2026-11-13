@@ -2,7 +2,12 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
-## Unreleased
+## 1.6.3 — 2026-11-12
+
+- Fix the Vercel AI SDK adapter (`@chronary/toolkit/ai-sdk`) on AI SDK 5 and 6: each tool now sets its Zod input schema as `inputSchema` as well as `parameters`. AI SDK 5 renamed the field and AI SDK 6 ignores `parameters`, so models saw an empty argument schema for every tool and could not pass `calendar_id`, `start_time` and the rest. AI SDK 4 still reads `parameters`. New type export `AISDKTool` (#1987).
+- Date-time tool inputs now accept a numeric UTC offset (`-08:00`, `+05:30`) as well as `Z`, matching the API (#1989). Before, the toolkit rejected offsets client-side before sending the request.
+
+## 1.6.2 — 2026-11-12
 
 - Ships `@chronary/sdk` 0.9.0: a 429 `quota_exceeded` (a monthly plan limit) is no longer retried, so a tool call at the cap fails at once with the quota error and its upgrade hints instead of sleeping on `Retry-After` (#1936).
 - Static MCP instructions and tool descriptions now use the Developer-plan wording: scoped keys, cross-agent availability, webhook delivery replay and secret rotation require a Developer or Pro plan; scheduling proposals and temporal holds stay Pro.

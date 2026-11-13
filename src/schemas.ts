@@ -99,8 +99,8 @@ export const DeleteBookingPageSchema = z.object({
 export const ListEventsSchema = z.object({
   calendar_id: z.string().optional().describe('Calendar ID to list events from. Provide this or agent_id.'),
   agent_id: z.string().optional().describe('Agent ID to list events for across all of the agent\'s calendars. Provide this or calendar_id.'),
-  start_after: z.string().datetime().optional().describe('Only events starting after this ISO 8601 time'),
-  start_before: z.string().datetime().optional().describe('Only events starting before this ISO 8601 time'),
+  start_after: z.string().datetime({ offset: true }).optional().describe('Only events starting after this ISO 8601 time'),
+  start_before: z.string().datetime({ offset: true }).optional().describe('Only events starting before this ISO 8601 time'),
   status: z.enum(['confirmed', 'tentative', 'cancelled', 'hold']).optional().describe('Filter by event status'),
   source: z.enum(['internal', 'external_ical']).optional().describe('Filter by source: "internal" (created via the API) or "external_ical" (synced from an iCal subscription)'),
   limit: z.number().int().min(1).max(200).default(50).describe('Max results to return'),
@@ -111,8 +111,8 @@ export const ListEventsSchema = z.object({
 export const ListOrgEventsSchema = z.object({
   calendar_ids: z.array(z.string()).max(50).optional().describe('Only these calendar IDs (at most 50)'),
   agent_id: z.string().optional().describe('Only this agent\'s calendars'),
-  start_after: z.string().datetime().optional().describe('Only events starting at or after this ISO 8601 time'),
-  start_before: z.string().datetime().optional().describe('Only events starting at or before this ISO 8601 time'),
+  start_after: z.string().datetime({ offset: true }).optional().describe('Only events starting at or after this ISO 8601 time'),
+  start_before: z.string().datetime({ offset: true }).optional().describe('Only events starting at or before this ISO 8601 time'),
   status: z.enum(['confirmed', 'tentative', 'cancelled', 'hold']).optional().describe('Filter by event status'),
   source: z.enum(['internal', 'external_ical']).optional().describe('Filter by source: "internal" (created via the API) or "external_ical" (synced from an iCal subscription)'),
   q: z.string().optional().describe('Case-insensitive title search. Requires start_after and start_before at most 31 days apart'),
@@ -129,13 +129,13 @@ export const GetEventSchema = z.object({
 export const CreateEventSchema = z.object({
   calendar_id: z.string().describe('Calendar ID to add the event to'),
   title: z.string().min(1).max(500).describe('Event title'),
-  start_time: z.string().datetime().describe('Start time (ISO 8601)'),
-  end_time: z.string().datetime().describe('End time (ISO 8601)'),
+  start_time: z.string().datetime({ offset: true }).describe('Start time (ISO 8601)'),
+  end_time: z.string().datetime({ offset: true }).describe('End time (ISO 8601)'),
   description: z.string().max(10_000).optional().describe('Optional event description'),
   all_day: z.boolean().default(false).describe('Whether this is an all-day event'),
   status: z.enum(['confirmed', 'tentative', 'hold']).optional().describe('Event status. "hold" creates a tentative reservation that auto-expires at hold_expires_at. Defaults to "confirmed".'),
   reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('Reminder offsets in minutes before start_time (e.g. [10, 1440]). Each fires an event.reminder webhook and shows as an alarm in the iCal feed. Omit or null to inherit the calendar default (then the system default of 10 min); [] for no reminders.'),
-  hold_expires_at: z.string().datetime().optional().describe('Required when status="hold". ISO 8601 timestamp 30s-15min in the future. Auto-releases the hold when reached.'),
+  hold_expires_at: z.string().datetime({ offset: true }).optional().describe('Required when status="hold". ISO 8601 timestamp 30s-15min in the future. Auto-releases the hold when reached.'),
   hold_priority: z.number().int().min(0).max(100).optional().describe('Only valid with status="hold". Higher-priority overlapping holds pre-empt lower-priority ones. Defaults to 0.'),
   recurrence_rule: z.string().max(256).optional().describe('Make this a recurring series (RFC 5545 RRULE subset, no "RRULE:" prefix), e.g. "FREQ=WEEKLY;BYDAY=MO,WE;COUNT=12". Supports FREQ=DAILY/WEEKLY/MONTHLY/YEARLY, INTERVAL, COUNT (max 730) or UNTIL, BYDAY (weekly list or monthly ordinal like 2TU/-1FR), BYMONTHDAY (1-28 or -1). start_time must match the rule pattern; expansion is UTC-only. Not allowed with status="hold". Free plan: 1 recurring series, must end within 90 days.'),
 });
@@ -145,8 +145,8 @@ export const UpdateEventSchema = z.object({
   calendar_id: z.string().optional().describe('Calendar ID that owns the event. Optional — if omitted the calendar is resolved from the event.'),
   title: z.string().min(1).max(500).optional().describe('New event title'),
   description: z.string().max(10_000).nullable().optional().describe('New description, or null to clear it'),
-  start_time: z.string().datetime().optional().describe('New start time (ISO 8601)'),
-  end_time: z.string().datetime().optional().describe('New end time (ISO 8601)'),
+  start_time: z.string().datetime({ offset: true }).optional().describe('New start time (ISO 8601)'),
+  end_time: z.string().datetime({ offset: true }).optional().describe('New end time (ISO 8601)'),
   all_day: z.boolean().optional().describe('Whether this is an all-day event'),
   status: z.enum(['confirmed', 'tentative', 'cancelled']).optional().describe('New event status'),
   metadata: z.record(z.string(), z.unknown()).optional().describe('Replacement metadata object'),
@@ -157,7 +157,7 @@ export const UpdateEventSchema = z.object({
 export const CancelEventSchema = z.object({
   event_id: z.string().describe('Event ID to cancel'),
   calendar_id: z.string().optional().describe('Calendar ID that owns the event. Optional — if omitted the calendar is resolved from the event. Matches the asymmetry with confirm_event / release_event which never required this arg.'),
-  occurrence_start: z.string().datetime().optional().describe('For recurring events only: ISO 8601 start of the single occurrence to cancel. The rest of the series is unaffected.'),
+  occurrence_start: z.string().datetime({ offset: true }).optional().describe('For recurring events only: ISO 8601 start of the single occurrence to cancel. The rest of the series is unaffected.'),
 });
 
 export const ConfirmEventSchema = z.object({
@@ -203,10 +203,10 @@ export const DeleteAgentSchema = z.object({
 
 export const GetAvailabilitySchema = z.object({
   agent_id: z.string().describe('Agent ID to check availability for'),
-  start: z.string().datetime().optional().describe('Range start (ISO 8601). Alias: start_time.'),
-  end: z.string().datetime().optional().describe('Range end (ISO 8601). Alias: end_time.'),
-  start_time: z.string().datetime().optional().describe('Alias for `start` (matches REST events naming).'),
-  end_time: z.string().datetime().optional().describe('Alias for `end` (matches REST events naming).'),
+  start: z.string().datetime({ offset: true }).optional().describe('Range start (ISO 8601). Alias: start_time.'),
+  end: z.string().datetime({ offset: true }).optional().describe('Range end (ISO 8601). Alias: end_time.'),
+  start_time: z.string().datetime({ offset: true }).optional().describe('Alias for `start` (matches REST events naming).'),
+  end_time: z.string().datetime({ offset: true }).optional().describe('Alias for `end` (matches REST events naming).'),
   duration: z.enum(['15m', '30m', '45m', '1h', '2h']).optional().describe('Requested slot length (15m/30m/45m/1h/2h). Preferred over the deprecated slot_duration. Defaults to 30m.'),
   slot_duration: z.enum(['15m', '30m', '45m', '1h', '2h']).optional().describe('Deprecated alias for `duration` — minimum slot length. Prefer `duration`.'),
   include_busy: z.boolean().default(false).describe('Include busy blocks in response'),
@@ -215,10 +215,10 @@ export const GetAvailabilitySchema = z.object({
 export const FindMeetingTimeSchema = z.object({
   agents: z.array(z.string()).min(1).optional().describe('Array of agent IDs to find common free time for. All agents must be free during the returned slots. Alias: agent_ids.'),
   agent_ids: z.array(z.string()).min(1).optional().describe('Alias for `agents` (matches REST/scheduling-proposal naming).'),
-  start: z.string().datetime().optional().describe('Search range start (ISO 8601). Alias: start_time.'),
-  end: z.string().datetime().optional().describe('Search range end (ISO 8601). Alias: end_time.'),
-  start_time: z.string().datetime().optional().describe('Alias for `start` (matches REST events naming).'),
-  end_time: z.string().datetime().optional().describe('Alias for `end` (matches REST events naming).'),
+  start: z.string().datetime({ offset: true }).optional().describe('Search range start (ISO 8601). Alias: start_time.'),
+  end: z.string().datetime({ offset: true }).optional().describe('Search range end (ISO 8601). Alias: end_time.'),
+  start_time: z.string().datetime({ offset: true }).optional().describe('Alias for `start` (matches REST events naming).'),
+  end_time: z.string().datetime({ offset: true }).optional().describe('Alias for `end` (matches REST events naming).'),
   duration: z.enum(['15m', '30m', '45m', '1h', '2h']).optional().describe('Requested slot length (15m/30m/45m/1h/2h). Preferred over the deprecated slot_duration. Defaults to 30m.'),
   slot_duration: z.enum(['15m', '30m', '45m', '1h', '2h']).optional().describe('Deprecated alias for `duration` — minimum slot length. Prefer `duration`.'),
   calendars: z.array(z.string()).optional().describe('Additional shared calendar IDs to treat as busy'),
@@ -246,8 +246,8 @@ export const GetCalendarContextSchema = z.object({
 // ── Scheduling proposals ───────────────────────────────────────
 
 const proposalSlotSchema = z.object({
-  start_time: z.string().datetime().describe('Slot start time (ISO 8601)'),
-  end_time: z.string().datetime().describe('Slot end time (ISO 8601), after start_time'),
+  start_time: z.string().datetime({ offset: true }).describe('Slot start time (ISO 8601)'),
+  end_time: z.string().datetime({ offset: true }).describe('Slot end time (ISO 8601), after start_time'),
   weight: z.number().min(0).max(10).default(1.0).optional().describe('Preference for this slot, 0–10 (higher = more preferred). Used to rank candidate slots when the proposal is resolved. Defaults to 1.'),
   calendar_id: z.string().optional().describe('Calendar to create the event on if this slot is chosen. Defaults to the proposal\'s top-level calendar_id.'),
 });
@@ -259,7 +259,7 @@ export const CreateProposalSchema = z.object({
   participant_agent_ids: z.array(z.string()).min(1).max(50).describe('Agent IDs invited to respond'),
   calendar_id: z.string().describe('Calendar the resolved event will be created on'),
   slots: z.array(proposalSlotSchema).min(1).max(20).describe('Candidate time slots (up to 20)'),
-  expires_at: z.string().datetime().optional().describe('Auto-cancel cutoff if unresolved'),
+  expires_at: z.string().datetime({ offset: true }).optional().describe('Auto-cancel cutoff if unresolved'),
 });
 
 export const ListProposalsSchema = z.object({
@@ -408,8 +408,8 @@ export const ListWebhookDeliveriesSchema = z.object({
     .regex(/^[a-z_]+\.(?:[a-z_]+)?$/)
     .optional()
     .describe('An exact event type (event.created), or a prefix ending in a dot (event.) for a whole group'),
-  created_after: z.string().datetime().optional().describe('Only deliveries created at or after this time (ISO 8601, UTC)'),
-  created_before: z.string().datetime().optional().describe('Only deliveries created before this time (ISO 8601, UTC)'),
+  created_after: z.string().datetime({ offset: true }).optional().describe('Only deliveries created at or after this time (ISO 8601)'),
+  created_before: z.string().datetime({ offset: true }).optional().describe('Only deliveries created before this time (ISO 8601)'),
   delivery_id: z.string().max(100).regex(/^whd_[A-Za-z0-9_-]+$/).optional().describe('Only the delivery with this id'),
   is_test: z.boolean().optional().describe('true for test events only, false to leave them out'),
   cursor: z.string().min(1).max(1024).optional().describe('The next_cursor from the previous page'),

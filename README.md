@@ -17,30 +17,33 @@ Each adapter's runtime peer dependency (e.g. `ai`, `@langchain/core`, `@modelcon
 ### Vercel AI SDK
 
 ```ts
-import { generateText } from 'ai';
+import { generateText, stepCountIs } from 'ai';
 import { openai } from '@ai-sdk/openai';
-import { createChronaryAISDKToolkit } from '@chronary/toolkit/ai-sdk';
+import { chronaryTools } from '@chronary/toolkit/ai-sdk';
 
-const tools = createChronaryAISDKToolkit({
+const tools = chronaryTools({
   apiKey: process.env.CHRONARY_API_KEY!,
 });
 
 const result = await generateText({
   model: openai('gpt-4o'),
   tools,
+  stopWhen: stepCountIs(5), // AI SDK 4: maxSteps: 5
   prompt: 'Schedule a 30-minute sync with Alex next Tuesday at 10am.',
 });
 ```
+
+Works with AI SDK 4, 5 and 6: each tool carries its Zod input schema as `inputSchema` (AI SDK 5 and 6) and as `parameters` (AI SDK 4).
 
 ### LangChain
 
 ```ts
 import { ChatOpenAI } from '@langchain/openai';
-import { createChronaryLangChainToolkit } from '@chronary/toolkit/langchain';
+import { ChronaryToolkit } from '@chronary/toolkit/langchain';
 
-const tools = createChronaryLangChainToolkit({
+const tools = new ChronaryToolkit({
   apiKey: process.env.CHRONARY_API_KEY!,
-});
+}).getTools();
 
 const llm = new ChatOpenAI({ model: 'gpt-4o' }).bindTools(tools);
 ```
@@ -49,11 +52,11 @@ const llm = new ChatOpenAI({ model: 'gpt-4o' }).bindTools(tools);
 
 ```ts
 import OpenAI from 'openai';
-import { createChronaryOpenAIToolkit } from '@chronary/toolkit/openai';
+import { ChronaryToolkit } from '@chronary/toolkit/openai';
 
-const tools = createChronaryOpenAIToolkit({
+const tools = new ChronaryToolkit({
   apiKey: process.env.CHRONARY_API_KEY!,
-});
+}).getTools();
 
 const client = new OpenAI();
 const response = await client.chat.completions.create({
@@ -67,11 +70,11 @@ const response = await client.chat.completions.create({
 
 ```ts
 import { Agent } from '@mastra/core/agent';
-import { createChronaryMastraToolkit } from '@chronary/toolkit/mastra';
+import { ChronaryToolkit } from '@chronary/toolkit/mastra';
 
-const tools = createChronaryMastraToolkit({
+const tools = new ChronaryToolkit({
   apiKey: process.env.CHRONARY_API_KEY!,
-});
+}).getTools();
 
 const agent = new Agent({ name: 'scheduler', tools });
 ```
@@ -80,11 +83,11 @@ const agent = new Agent({ name: 'scheduler', tools });
 
 ```ts
 import { Server } from '@modelcontextprotocol/sdk/server';
-import { createChronaryMCPToolkit } from '@chronary/toolkit/mcp';
+import { ChronaryToolkit } from '@chronary/toolkit/mcp';
 
-const tools = createChronaryMCPToolkit({
+const tools = new ChronaryToolkit({
   apiKey: process.env.CHRONARY_API_KEY!,
-});
+}).getTools();
 ```
 
 If you want a ready-to-run stdio MCP server instead of wiring tools into your own server, use [`chronary-mcp`](https://github.com/Chronary/chronary-mcp) — it wraps this toolkit for one-line MCP client setup.
