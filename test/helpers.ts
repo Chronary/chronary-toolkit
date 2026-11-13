@@ -94,7 +94,7 @@ export function mockChronaryClient() {
       history: vi.fn().mockResolvedValue({ plan: 'free', months: 6, limits: {}, data: [] }),
     },
     billing: {
-      get: vi.fn().mockResolvedValue({ plan: 'free-agent', self_serve_upgrade: true, pending_upgrade_request: null }),
+      get: vi.fn().mockResolvedValue({ plan: 'free', self_serve_upgrade: true, pending_upgrade_request: null }),
       upgradeRequests: {
         create: vi.fn().mockResolvedValue({ id: 'upr_1', status: 'pending', approval_url: 'https://console.test/settings/billing/requests/upr_1' }),
         get: vi.fn().mockResolvedValue({ id: 'upr_1', status: 'completed', approval_url: null }),
@@ -237,12 +237,12 @@ export const FIXTURES = {
     period_start: '2026-04-01T00:00:00Z',
     period_end: '2026-05-01T00:00:00Z',
     plan: 'free',
-    agents: { used: 2, limit: 5 },
-    calendars: { used: 3, limit: 10 },
+    agents: { used: 1, limit: 1 },
+    calendars: { used: 1, limit: 1 },
     events: { used: 15, limit: 100 },
-    api_calls: { used: 150, limit: 10000 },
-    webhooks: { used: 1, limit: 5 },
-    availability_queries: { used: 5, limit: 1000 },
-    ical_subscriptions: { used: 1, limit: 3 },
+    api_calls: { used: 150, limit: 1000 },
+    webhooks: { used: 1, limit: 1000 },
+    availability_queries: { used: 5, limit: 100 },
+    ical_subscriptions: { used: 0, limit: 0 },
   },
 };

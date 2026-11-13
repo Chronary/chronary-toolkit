@@ -473,7 +473,7 @@ describe('tool functions', () => {
     const result = await fns.getBilling({ client: asClient(), params: {} });
     expect(result.isError).toBe(false);
     expect(client.billing.get).toHaveBeenCalled();
-    expect(result.result).toMatchObject({ plan: 'free-agent' });
+    expect(result.result).toMatchObject({ plan: 'free' });
   });
 
   it('requestUpgrade forwards params to billing.upgradeRequests.create', async () => {
