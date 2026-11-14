@@ -2,6 +2,8 @@
 
 AI-agent framework adapters for [Chronary](https://chronary.ai) — 65 calendar tools usable directly by Vercel AI SDK, LangChain, Mastra, OpenAI function calling, and MCP clients.
 
+[![Chronary Toolkit on StartupScores](https://startupscores.com/badge/chronary-toolkit.svg?style=shield&v=combo&theme=dark)](https://startupscores.com/open-source/chronary-toolkit)
+
 ## Installation
 
 ```bash
