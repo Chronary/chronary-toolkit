@@ -120,6 +120,25 @@ describe('tool functions', () => {
     }));
   });
 
+  it('createEvent forwards timezone (#2276)', async () => {
+    await fns.createEvent({ client: asClient(), params: {
+      calendar_id: 'cal_1', title: 'Pick up kids', start_time: '2026-04-15T23:00:00Z', end_time: '2026-04-15T23:30:00Z',
+      recurrence_rule: 'FREQ=WEEKLY;BYDAY=WE', timezone: 'America/Los_Angeles',
+    } });
+    expect(client.events.create).toHaveBeenCalledWith('cal_1', expect.objectContaining({
+      timezone: 'America/Los_Angeles', recurrence_rule: 'FREQ=WEEKLY;BYDAY=WE',
+    }));
+  });
+
+  it('updateEvent forwards timezone, including null', async () => {
+    await fns.updateEvent({ client: asClient(), params: { event_id: 'evt_1', timezone: null } });
+    expect(client.events.updateById).toHaveBeenCalledWith('evt_1', { timezone: null });
+    await fns.updateEvent({ client: asClient(), params: {
+      calendar_id: 'cal_1', event_id: 'evt_1', timezone: 'America/Los_Angeles', recurrence_rule: 'FREQ=WEEKLY;BYDAY=TU',
+    } });
+    expect(client.events.update).toHaveBeenCalledWith('cal_1', 'evt_1', { timezone: 'America/Los_Angeles', recurrence_rule: 'FREQ=WEEKLY;BYDAY=TU' });
+  });
+
   it('updateEvent forwards recurrence_rule (null clears the series rule)', async () => {
     await fns.updateEvent({ client: asClient(), params: { event_id: 'evt_1', recurrence_rule: null } });
     expect(client.events.updateById).toHaveBeenCalledWith('evt_1', expect.objectContaining({ recurrence_rule: null }));

@@ -152,6 +152,7 @@ export const createEvent = safeFunc(async (ctx: Ctx<{
   description?: string; all_day?: boolean;
   status?: 'confirmed' | 'tentative' | 'hold'; reminders?: number[] | null; metadata?: Record<string, unknown>;
   hold_expires_at?: string; hold_priority?: number; recurrence_rule?: string;
+  timezone?: string;
 }>) => {
   const { client, params } = ctx;
   const { calendar_id, ...eventParams } = params;
@@ -162,7 +163,7 @@ export const updateEvent = safeFunc(async (ctx: Ctx<{
   calendar_id?: string; event_id: string; title?: string; description?: string | null;
   start_time?: string; end_time?: string; all_day?: boolean;
   status?: 'confirmed' | 'tentative' | 'cancelled'; reminders?: number[] | null; metadata?: Record<string, unknown>;
-  recurrence_rule?: string | null;
+  recurrence_rule?: string | null; timezone?: string | null;
 }>) => {
   const { client, params } = ctx;
   const { calendar_id, event_id, ...updates } = params;

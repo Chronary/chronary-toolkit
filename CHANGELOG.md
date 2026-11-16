@@ -2,6 +2,12 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
+## 1.7.0 — 2026-11-16
+
+- `create_event` and `update_event` take `timezone` (IANA, e.g. `"America/Los_Angeles"`; `null` on update for UTC): a recurring series repeats on local wall time across daylight-saving changes, and BYDAY and a date-only UNTIL are read in that zone. Same descriptions as the hosted server (#2276).
+- The `recurrence_rule` descriptions no longer say expansion is UTC-only or that a series edit resets cancelled occurrences: an edit that changes the rule, `start_time` or `timezone` keeps each cancelled occurrence on its local date and lists any that no longer match in `droppedExdates` (#2277).
+- Ships `@chronary/sdk` 0.11.0 (`timezone` on events).
+
 ## 1.6.3 — 2026-11-12
 
 - Fix the Vercel AI SDK adapter (`@chronary/toolkit/ai-sdk`) on AI SDK 5 and 6: each tool now sets its Zod input schema as `inputSchema` as well as `parameters`. AI SDK 5 renamed the field and AI SDK 6 ignores `parameters`, so models saw an empty argument schema for every tool and could not pass `calendar_id`, `start_time` and the rest. AI SDK 4 still reads `parameters`. New type export `AISDKTool` (#1987).

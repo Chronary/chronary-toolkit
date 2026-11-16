@@ -206,6 +206,29 @@ describe('schemas', () => {
       expect(schemas.UpdateEventSchema.safeParse({ event_id: 'evt_1', recurrence_rule: null }).success).toBe(true);
     });
 
+    it('CreateEventSchema accepts an optional timezone (#2276)', () => {
+      const base = { calendar_id: 'cal_1', title: 'T', start_time: '2026-04-15T09:00:00Z', end_time: '2026-04-15T10:00:00Z' };
+      expect(schemas.CreateEventSchema.safeParse({ ...base, timezone: 'America/Los_Angeles' }).success).toBe(true);
+      expect(schemas.CreateEventSchema.safeParse(base).success).toBe(true);
+      expect(schemas.CreateEventSchema.safeParse({ ...base, timezone: null }).success).toBe(false);
+      expect(schemas.CreateEventSchema.safeParse({ ...base, timezone: 'x'.repeat(65) }).success).toBe(false);
+    });
+
+    it('UpdateEventSchema accepts timezone as a value or null', () => {
+      expect(schemas.UpdateEventSchema.safeParse({ event_id: 'evt_1', timezone: 'Europe/Berlin' }).success).toBe(true);
+      expect(schemas.UpdateEventSchema.safeParse({ event_id: 'evt_1', timezone: null }).success).toBe(true);
+      expect(schemas.UpdateEventSchema.safeParse({ event_id: 'evt_1', timezone: 'x'.repeat(65) }).success).toBe(false);
+    });
+
+    it('recurrence_rule descriptions no longer claim UTC-only expansion or exdate resets (#2276, #2277)', () => {
+      const createDesc = schemas.CreateEventSchema.shape.recurrence_rule.description ?? '';
+      const updateDesc = schemas.UpdateEventSchema.shape.recurrence_rule.description ?? '';
+      expect(createDesc).not.toMatch(/UTC-only/);
+      expect(createDesc).toContain('in timezone when set, else UTC');
+      expect(updateDesc).not.toMatch(/resets cancelled occurrences/);
+      expect(updateDesc).toContain('droppedExdates');
+    });
+
     it('ListEventsSchema accepts expand and defaults it to false', () => {
       const result = schemas.ListEventsSchema.safeParse({
         calendar_id: 'cal_1',
