@@ -94,8 +94,8 @@ iCal feeds, and receive webhooks.
 Organization keys (\`chr_sk_\`) can use every tool; Agent keys (\`chr_ak_\`) are
 limited to their own agent and cannot use org-only tools such as
 \`create_agent\` or \`find_meeting_time\`. Scoped keys, cross-agent availability,
-webhook delivery replay and secret rotation require a Developer or Pro plan;
-scheduling proposals and temporal holds require Pro.`;
+scheduling proposals, temporal holds, webhook delivery replay and secret
+rotation require a Developer or Pro plan.`;
 
 /**
  * MCP v1.x adapter.

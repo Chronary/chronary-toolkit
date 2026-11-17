@@ -2,6 +2,10 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
+## 1.7.1 — 2026-11-16
+
+- Scheduling proposals and temporal holds now need a Developer or Pro plan, not Pro: the static MCP instructions and the `create_proposal`, `respond_to_proposal` and `resolve_proposal` descriptions say so. `cancel_proposal` no longer says "Pro plan only": cancelling works on every plan (#2331).
+
 ## 1.7.0 — 2026-11-16
 
 - `create_event` and `update_event` take `timezone` (IANA, e.g. `"America/Los_Angeles"`; `null` on update for UTC): a recurring series repeats on local wall time across daylight-saving changes, and BYDAY and a date-only UNTIL are read in that zone. Same descriptions as the hosted server (#2276).

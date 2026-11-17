@@ -11,7 +11,7 @@ Typical flow: create_agent -> create_calendar -> create_event / get_availability
 
 When checking availability, always inspect availability_state and warnings before treating returned slots as complete. Human-calendar setup requires a human to open setup_url and consent; agents never receive provider credentials or calendar contents.
 
-Organization keys (chr_sk_) can use every tool; Agent keys (chr_ak_) are limited to their own agent and cannot use org-only tools such as create_agent or find_meeting_time. Scoped keys, cross-agent availability, webhook delivery replay and secret rotation require a Developer or Pro plan; scheduling proposals and temporal holds require Pro.
+Organization keys (chr_sk_) can use every tool; Agent keys (chr_ak_) are limited to their own agent and cannot use org-only tools such as create_agent or find_meeting_time. Scoped keys, cross-agent availability, scheduling proposals, temporal holds, webhook delivery replay and secret rotation require a Developer or Pro plan.
 
 If you hit a plan limit, don't retry in a loop: call get_billing, then request_upgrade, and give approval_url to your human. Agents cannot pay; a human completes checkout.
 

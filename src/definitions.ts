@@ -291,7 +291,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   // ── Scheduling proposals ───────────────────────────────────────
   {
     name: 'create_proposal',
-    description: 'Create a scheduling proposal — send a set of candidate time slots to one or more participant agents so they can accept, decline, or counter-propose. The organizer agent owns the proposal; once every participant responds, the system auto-resolves to the highest-scoring slot (or cancels if all decline). Requires an Organization key. Pro plan only.',
+    description: 'Create a scheduling proposal — send a set of candidate time slots to one or more participant agents so they can accept, decline, or counter-propose. The organizer agent owns the proposal; once every participant responds, the system auto-resolves to the highest-scoring slot (or cancels if all decline). Requires an Organization key and a Developer or Pro plan.',
     schema: schemas.CreateProposalSchema,
     annotations: { title: 'Create Proposal', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     execute: createExecutor(fns.createProposal),
@@ -312,21 +312,21 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'respond_to_proposal',
-    description: 'Submit a response (accept / decline / counter) on behalf of one participant agent to an open proposal. An "accept" requires the slot id from the proposal; a "counter" can suggest alternative slots. When all participants have responded the proposal auto-resolves — no separate resolve call needed in the normal flow. Requires an Organization key. Pro plan only.',
+    description: 'Submit a response (accept / decline / counter) on behalf of one participant agent to an open proposal. An "accept" requires the slot id from the proposal; a "counter" can suggest alternative slots. When all participants have responded the proposal auto-resolves — no separate resolve call needed in the normal flow. Requires an Organization key and a Developer or Pro plan.',
     schema: schemas.RespondToProposalSchema,
     annotations: { title: 'Respond To Proposal', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     execute: createExecutor(fns.respondToProposal),
   },
   {
     name: 'resolve_proposal',
-    description: 'Force-resolve an open proposal using responses collected so far. Picks the highest-scoring slot among those accepted by the most participants and creates a confirmed calendar event. If every response was "decline", the proposal is cancelled instead. Use when you want to close out a proposal without waiting for every participant. Requires an Organization key. Pro plan only.',
+    description: 'Force-resolve an open proposal using responses collected so far. Picks the highest-scoring slot among those accepted by the most participants and creates a confirmed calendar event. If every response was "decline", the proposal is cancelled instead. Use when you want to close out a proposal without waiting for every participant. Requires an Organization key and a Developer or Pro plan.',
     schema: schemas.ResolveProposalSchema,
     annotations: { title: 'Resolve Proposal', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.resolveProposal),
   },
   {
     name: 'cancel_proposal',
-    description: 'Cancel an open proposal. Fires a proposal.cancelled webhook with reason="organizer_cancelled". Requires an Organization key. Pro plan only.',
+    description: 'Cancel an open proposal. Fires a proposal.cancelled webhook with reason="organizer_cancelled". Requires an Organization key. Works on every plan, so an org that dropped to Free can still cancel proposals it made on a paid plan.',
     schema: schemas.CancelProposalSchema,
     annotations: { title: 'Cancel Proposal', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.cancelProposal),
