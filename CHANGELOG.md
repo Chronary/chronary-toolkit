@@ -2,6 +2,10 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
+## 1.7.2 — 2026-11-17
+
+- The `request_upgrade` description says the request is for the next plan up (Free to Developer, Developer to Pro), not always Pro (#2397).
+
 ## 1.7.1 — 2026-11-16
 
 - Scheduling proposals and temporal holds now need a Developer or Pro plan, not Pro: the static MCP instructions and the `create_proposal`, `respond_to_proposal` and `resolve_proposal` descriptions say so. `cancel_proposal` no longer says "Pro plan only": cancelling works on every plan (#2331).

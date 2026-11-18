@@ -249,7 +249,7 @@ export class ChronaryToolkit extends ListToolkit<McpToolDefinition> {
             role: 'user',
             content: {
               type: 'text',
-              text: `Create a scheduling proposal "${title}" organized by ${organizer_agent_id} for participants ${participant_agent_ids}. First use get_availability / find_meeting_time to pick 2-3 candidate slots, then call create_proposal with those slots. Report the proposal ID. (Scheduling proposals require a Pro plan and an Organization key.)`,
+              text: `Create a scheduling proposal "${title}" organized by ${organizer_agent_id} for participants ${participant_agent_ids}. First use get_availability / find_meeting_time to pick 2-3 candidate slots, then call create_proposal with those slots. Report the proposal ID. (Scheduling proposals require a Developer or Pro plan and an Organization key.)`,
             },
           },
         ],

@@ -228,14 +228,14 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'update_agent',
-    description: 'Update an agent\'s name, description, metadata, or status (active/paused). Requires an Organization key — Agent keys cannot mutate agents.',
+    description: 'Update an agent\'s name, description, metadata, or status (active/paused). Setting status on a decommissioned agent restores it and makes its calendars writable again; that is refused with quota_exceeded when the agent, its calendars or their recurring series would put the organization over the plan\'s agent, calendar or recurring series limit. Requires an Organization key — Agent keys cannot mutate agents.',
     schema: schemas.UpdateAgentSchema,
     annotations: { title: 'Update Agent', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.updateAgent),
   },
   {
     name: 'delete_agent',
-    description: 'Decommission an agent. This marks the agent as decommissioned and revokes all of its Agent keys. Requires an Organization key — Agent keys cannot delete agents.',
+    description: 'Decommission an agent. This marks the agent as decommissioned and revokes all of its Agent keys. Its calendars and events are kept but stop counting toward the plan\'s calendar limit, and they are read-only (writes return agent_inactive) until the agent is restored with update_agent. Requires an Organization key — Agent keys cannot delete agents.',
     schema: schemas.DeleteAgentSchema,
     annotations: { title: 'Delete Agent', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.deleteAgent),
@@ -547,7 +547,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'request_upgrade',
-    description: 'Ask your human to upgrade this Chronary account to Pro. Returns approval_url — give it to your human; only a human can pay. If reused=true a request is already pending — do not call again; poll get_upgrade_request at most once a minute. The link opens the Billing page in the Chronary console.',
+    description: 'Ask your human to upgrade this Chronary account to the next plan up (Free to Developer, Developer to Pro). Returns approval_url — give it to your human; only a human can pay. If reused=true a request is already pending — do not call again; poll get_upgrade_request at most once a minute. The link opens the Billing page in the Chronary console.',
     schema: schemas.RequestUpgradeSchema,
     annotations: { title: 'Request Upgrade', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.requestUpgrade),
