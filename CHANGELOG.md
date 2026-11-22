@@ -2,7 +2,13 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
-## 1.7.3 — unreleased
+## 1.7.4 — unreleased
+
+- `delete_calendar` says that the calendar's booking pages are deleted too and their public links stop working, matching the hosted server (#2545).
+- `create_event` and `update_event` describe how all-day events are stored, matching the hosted server (#2566): whole UTC days from midnight of the date written in `start_time` through midnight after the last day the end touches, at least one day. `update_event` adds that moving one bound snaps only that bound, and that moving an all-day event with a non-UTC offset needs `all_day: true` in the same call so the written date is kept.
+- **ID arguments are validated (#2519).** Every tool argument that names a resource (`event_id`, `calendar_id`, `agent_id`, `webhook_id`, `key_id`, `subscription_id`, `proposal_id`, `booking_page_id`, `delivery_id`, the upgrade request `id` and the rest) must now be a Chronary ID: 1 to 128 letters, digits, `_` or `-`. A value such as `../agents/agt_main`, `whk_1#` or `evt_1?x=1` is refused before any request, so a prompt-injected tool call can no longer reach another resource (for example `cancel_event` deleting an agent), whatever `tools` allowlist the host set. Real IDs, including UUID key IDs, are accepted as before. A required ID can no longer be `""`; an optional one sent as `""` (as many hosts fill omitted strings) still means "not given", so `cancel_event` with `calendar_id: ""` resolves the calendar from the event as before, and the JSON Schema still allows `""` there. Requires `@chronary/sdk` 0.13.2, which also encodes every path segment.
+
+## 1.7.3 — 2026-11-22
 
 - Every tool that is not read-only now sets `destructiveHint: true` (25 tools changed: creates, updates, `confirm_event`, the proposal writes, `set_availability_rules`, the webhook test and replay, the iCal writes, `create_scoped_key`, `accept_terms` and the upgrade-request writes). The Claude connectors directory requires every tool to have a `title` and `readOnlyHint: true` or `destructiveHint: true`. Read-only tools are unchanged; the hosted MCP server matches (#2608).
 - `create_booking_page` validates `availability_constraints` like the hosted API: keys `mon` to `sun` only, each `{"start":"HH:MM","end":"HH:MM"}` in 24-hour time with end after start, at least one day (or `null`). Input the API rejects (`{"monday":…}`, `{}`, `"9am"`, end before start) is now refused client-side instead of being accepted; it used to create a page that offered no slots or failed to load (#2525).

@@ -104,7 +104,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'delete_calendar',
-    description: 'Delete a calendar (soft delete). Its events are no longer returned and it stops contributing to availability. Agent keys may only delete calendars owned by their agent.',
+    description: 'Delete a calendar (soft delete). Its events are no longer returned and it stops contributing to availability. Its booking pages are deleted too (their public links stop working). Agent keys may only delete calendars owned by their agent.',
     schema: schemas.DeleteCalendarSchema,
     annotations: { title: 'Delete Calendar', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.deleteCalendar),
