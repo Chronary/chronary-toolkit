@@ -2,7 +2,11 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
-## 1.7.4 — unreleased
+## 1.7.5 — unreleased
+
+- `get_audit_log` accepts `actor_type: "oauth_app"`: entries made by an app connected to the hosted MCP server by signing in, such as Claude (#2254). Same as the hosted server.
+
+## 1.7.4 — 2026-11-22
 
 - `delete_calendar` says that the calendar's booking pages are deleted too and their public links stop working, matching the hosted server (#2545).
 - `create_event` and `update_event` describe how all-day events are stored, matching the hosted server (#2566): whole UTC days from midnight of the date written in `start_time` through midnight after the last day the end touches, at least one day. `update_event` adds that moving one bound snaps only that bound, and that moving an all-day event with a non-UTC offset needs `all_day: true` in the same call so the written date is kept.
