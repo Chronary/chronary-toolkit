@@ -82,6 +82,16 @@ describe('MCP annotations (#1662)', () => {
     expect(def('update_webhook').annotations.destructiveHint).toBe(true);
   });
 
+  // Claude connectors directory rule (#2608): a title, and readOnlyHint: true
+  // or destructiveHint: true. A future tool with both false fails here.
+  it('every tool has a title and exactly one of readOnlyHint / destructiveHint', () => {
+    const offending = TOOL_DEFINITIONS.filter((d) => {
+      const { title, readOnlyHint, destructiveHint } = d.annotations;
+      return typeof title !== 'string' || title.trim() === '' || readOnlyHint === destructiveHint;
+    }).map((d) => `${d.name} ${JSON.stringify(d.annotations)}`);
+    expect(offending).toEqual([]);
+  });
+
   it('read-only tools are never destructive', () => {
     for (const d of TOOL_DEFINITIONS) {
       if (d.annotations.readOnlyHint) expect(d.annotations.destructiveHint, d.name).toBe(false);

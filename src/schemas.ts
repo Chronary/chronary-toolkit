@@ -62,6 +62,31 @@ export const DeleteCalendarSchema = z.object({
   calendar_id: z.string().describe('Calendar ID to delete'),
 });
 
+// ── Weekly working hours (availability rules + booking pages) ──
+// The hosted API's WorkingHoursSchema: mon..sun keys, HH:MM 24-hour, end after
+// start, at least one day.
+
+const timeOfDay = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'must be HH:MM in 24-hour time');
+
+const workingHoursDaySchema = z.object({
+  start: timeOfDay.describe('Start of the working window, HH:MM 24-hour, in the timezone of the availability rules or booking page it belongs to (e.g. "09:00")'),
+  end: timeOfDay.describe('End of the working window, HH:MM 24-hour, after start (e.g. "17:00")'),
+})
+  .refine((v) => v.end > v.start, 'end must be after start')
+  .describe('A single day\'s working hours window');
+
+const workingHoursSchema = z.object({
+  mon: workingHoursDaySchema.optional(),
+  tue: workingHoursDaySchema.optional(),
+  wed: workingHoursDaySchema.optional(),
+  thu: workingHoursDaySchema.optional(),
+  fri: workingHoursDaySchema.optional(),
+  sat: workingHoursDaySchema.optional(),
+  sun: workingHoursDaySchema.optional(),
+})
+  .refine((v) => Object.keys(v).length > 0, 'at least one day must be specified')
+  .nullable();
+
 // ── Booking pages ──────────────────────────────────────────────
 
 export const ListBookingPagesSchema = z.object({
@@ -74,7 +99,7 @@ export const GetBookingPageSchema = z.object({
 });
 
 export const CreateBookingPageSchema = z.object({
-  calendar_id: z.string().describe('Calendar a booking resolves to (from create_calendar/list_calendars).'),
+  calendar_id: z.string().describe('Calendar ID a booking resolves to.'),
   title: z.string().min(1).max(200).describe('Meeting title shown on the page.'),
   description: z.string().max(2000).optional().describe('Optional description shown to the booker.'),
   duration_minutes: z.number().int().min(5).max(480).optional().describe('Slot length in minutes (default 30).'),
@@ -82,11 +107,10 @@ export const CreateBookingPageSchema = z.object({
   window_days: z.number().int().min(1).max(365).optional().describe('How far ahead bookings are allowed (default 14).'),
   min_notice_minutes: z.number().int().min(0).max(40320).optional().describe('Minimum lead time before a bookable slot (default 0).'),
   timezone: z.string().min(1).max(64).optional().describe('IANA timezone for display + working hours (default UTC).'),
-  availability_constraints: z
-    .record(z.string(), z.object({ start: z.string(), end: z.string() }))
-    .nullable()
+  // Same shape the hosted API validates (#2525).
+  availability_constraints: workingHoursSchema
     .optional()
-    .describe('Weekly working hours, e.g. {"mon":{"start":"09:00","end":"17:00"}}. Omit/null for any time in the window.'),
+    .describe('Weekly working hours keyed by day (mon, tue, wed, thu, fri, sat, sun; a day left out takes no bookings), each {"start":"HH:MM","end":"HH:MM"} in 24-hour time with end after start, e.g. {"mon":{"start":"09:00","end":"17:00"}}. Omit/null for any time in the window.'),
   active: z.boolean().optional().describe('Whether the page accepts bookings (default true).'),
 });
 
@@ -158,7 +182,7 @@ export const UpdateEventSchema = z.object({
 
 export const CancelEventSchema = z.object({
   event_id: z.string().describe('Event ID to cancel'),
-  calendar_id: z.string().optional().describe('Calendar ID that owns the event. Optional — if omitted the calendar is resolved from the event. Matches the asymmetry with confirm_event / release_event which never required this arg.'),
+  calendar_id: z.string().optional().describe('Calendar ID that owns the event. Optional — if omitted the calendar is resolved from the event.'),
   occurrence_start: z.string().datetime({ offset: true }).optional().describe('For recurring events only: ISO 8601 start of the single occurrence to cancel. The rest of the series is unaffected.'),
 });
 
@@ -252,7 +276,11 @@ const proposalSlotSchema = z.object({
   end_time: z.string().datetime({ offset: true }).describe('Slot end time (ISO 8601), after start_time'),
   weight: z.number().min(0).max(10).default(1.0).optional().describe('Preference for this slot, 0–10 (higher = more preferred). Used to rank candidate slots when the proposal is resolved. Defaults to 1.'),
   calendar_id: z.string().optional().describe('Calendar to create the event on if this slot is chosen. Defaults to the proposal\'s top-level calendar_id.'),
-});
+}).refine(
+  // Same rule as the API (#2538): a slot must end after it starts.
+  (v) => new Date(v.end_time).getTime() > new Date(v.start_time).getTime(),
+  'end_time must be after start_time',
+);
 
 export const CreateProposalSchema = z.object({
   title: z.string().min(1).max(500).describe('Short description of what the meeting is about'),
@@ -293,27 +321,6 @@ export const CancelProposalSchema = z.object({
 });
 
 // ── Availability rules ─────────────────────────────────────────
-
-const timeOfDay = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'must be HH:MM in 24-hour time');
-
-const workingHoursDaySchema = z.object({
-  start: timeOfDay.describe('Start of the working window, HH:MM 24-hour, in the rules timezone (e.g. "09:00")'),
-  end: timeOfDay.describe('End of the working window, HH:MM 24-hour, after start (e.g. "17:00")'),
-})
-  .refine((v) => v.end > v.start, 'end must be after start')
-  .describe('A single day\'s working hours window');
-
-const workingHoursSchema = z.object({
-  mon: workingHoursDaySchema.optional(),
-  tue: workingHoursDaySchema.optional(),
-  wed: workingHoursDaySchema.optional(),
-  thu: workingHoursDaySchema.optional(),
-  fri: workingHoursDaySchema.optional(),
-  sat: workingHoursDaySchema.optional(),
-  sun: workingHoursDaySchema.optional(),
-})
-  .refine((v) => Object.keys(v).length > 0, 'at least one day must be specified')
-  .nullable();
 
 export const SetAvailabilityRulesSchema = z.object({
   calendar_id: z.string().describe('Calendar to configure'),
@@ -419,7 +426,7 @@ export const ListWebhookDeliveriesSchema = z.object({
 
 export const GetWebhookDeliverySchema = z.object({
   webhook_id: z.string().describe('Webhook subscription the delivery belongs to'),
-  delivery_id: z.string().describe('Delivery ID (whd_...) from list_webhook_deliveries'),
+  delivery_id: z.string().describe('Delivery ID (whd_...)'),
 });
 
 export const SendTestWebhookSchema = z.object({

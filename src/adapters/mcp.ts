@@ -166,7 +166,7 @@ export class ChronaryToolkit extends ListToolkit<McpToolDefinition> {
         title: 'Schedule an event',
         description: "Create a calendar event on an agent's calendar at a specific time.",
         argsSchema: {
-          calendar_id: z.string().describe('Target calendar ID (cal_...). Run list_calendars first if unknown.'),
+          calendar_id: z.string().describe('Target calendar ID (cal_...).'),
           title: z.string().describe('Event title'),
           start_time: z.string().describe('Start time, ISO 8601 (e.g. 2026-07-10T15:00:00Z)'),
           end_time: z.string().describe('End time, ISO 8601'),

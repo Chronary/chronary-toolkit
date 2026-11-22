@@ -92,14 +92,14 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
     name: 'create_calendar',
     description: 'Create a calendar to hold events and track availability. Calendars are required before creating events — call this first when setting up a new agent. An agent can have multiple calendars (e.g. "Work", "Personal"). Org-level calendars (no agent_id) can be used as shared resources like meeting rooms.',
     schema: schemas.CreateCalendarSchema,
-    annotations: { title: 'Create Calendar', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    annotations: { title: 'Create Calendar', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     execute: createExecutor(fns.createCalendar),
   },
   {
     name: 'update_calendar',
     description: 'Update a calendar\'s name, timezone, agent status, default reminders, or metadata. Agent keys may only update calendars owned by their agent.',
     schema: schemas.UpdateCalendarSchema,
-    annotations: { title: 'Update Calendar', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    annotations: { title: 'Update Calendar', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.updateCalendar),
   },
   {
@@ -115,7 +115,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
     name: 'create_booking_page',
     description: 'Create a public booking page (a hosted scheduling link) for a calendar. Returns a booking_url to send to a human; when they pick a slot, a confirmed event is created on the calendar and an event.created webhook fires with a booking_page_id field. Set availability_constraints to restrict to weekly working hours; existing calendar events always block slots.',
     schema: schemas.CreateBookingPageSchema,
-    annotations: { title: 'Create Booking Page', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    annotations: { title: 'Create Booking Page', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     execute: createExecutor(fns.createBookingPage),
   },
   {
@@ -151,7 +151,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'list_org_events',
-    description: 'List events across all of the organization\'s calendars in one call, ordered by start time (an Agent key sees only its agent\'s calendars). Narrow with `calendar_ids`, `agent_id`, a `start_after`/`start_before` window, `status` and `source`. `q` searches titles (case-insensitive) and needs both window bounds at most 31 days apart. Use list_events for one calendar.',
+    description: 'List events across all of the organization\'s calendars in one call, ordered by start time (an Agent key sees only its agent\'s calendars). Narrow with `calendar_ids`, `agent_id`, a `start_after`/`start_before` window, `status` and `source`. `q` searches titles (case-insensitive) and needs both window bounds at most 31 days apart. Page with the returned next_cursor.',
     schema: schemas.ListOrgEventsSchema,
     annotations: { title: 'List Organization Events', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     untrustedFields: EVENT_UNTRUSTED_FIELDS,
@@ -167,16 +167,16 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'create_event',
-    description: 'Create a booking, appointment, meeting, hold, or any scheduled event on a calendar. The calendar_id comes from create_calendar or list_events. Once created, this event blocks the agent\'s availability during that time and appears in availability queries. Use status="hold" with hold_expires_at to tentatively reserve a slot that auto-releases on TTL.',
+    description: 'Create a booking, appointment, meeting, hold, or any scheduled event on a calendar. Once created, this event blocks the agent\'s availability during that time and appears in availability queries. Use status="hold" with hold_expires_at to tentatively reserve a slot that auto-releases on TTL.',
     schema: schemas.CreateEventSchema,
-    annotations: { title: 'Create Event', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    annotations: { title: 'Create Event', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     execute: createExecutor(fns.createEvent),
   },
   {
     name: 'update_event',
-    description: 'Reschedule or edit an event — change its title, description, start/end times, location, status, reminders, or metadata. Use this to move an appointment to a new time or update its details. Provide only the fields you want to change. Holds cannot be edited via this tool (use confirm_event / release_event). External iCal events are read-only. `calendar_id` is optional — if omitted it is resolved from the event.',
+    description: 'Reschedule or edit an event — change its title, description, start/end times, location, status, reminders, or metadata. Use this to move an appointment to a new time or update its details. Provide only the fields you want to change. Holds cannot be edited; confirm or release them instead. External iCal events are read-only. `calendar_id` is optional — if omitted it is resolved from the event.',
     schema: schemas.UpdateEventSchema,
-    annotations: { title: 'Update Event', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    annotations: { title: 'Update Event', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     untrustedFields: EVENT_UNTRUSTED_FIELDS,
     execute: createExecutor(fns.updateEvent),
   },
@@ -192,7 +192,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
     name: 'confirm_event',
     description: 'Promote a held event to a confirmed booking. The event must currently have status="hold" and its hold_expires_at must not have passed. After confirmation, event.started and event.ended lifecycle webhooks fire at the scheduled times.',
     schema: schemas.ConfirmEventSchema,
-    annotations: { title: 'Confirm Event', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    annotations: { title: 'Confirm Event', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     untrustedFields: EVENT_UNTRUSTED_FIELDS,
     execute: createExecutor(fns.confirmEvent),
   },
@@ -209,7 +209,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
     name: 'create_agent',
     description: 'Register your agent (AI assistant, human participant, or resource) with Chronary so it can own calendars, events, and webhooks.',
     schema: schemas.CreateAgentSchema,
-    annotations: { title: 'Create Agent', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    annotations: { title: 'Create Agent', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     execute: createExecutor(fns.createAgent),
   },
   {
@@ -230,12 +230,12 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
     name: 'update_agent',
     description: 'Update an agent\'s name, description, metadata, or status (active/paused). Setting status on a decommissioned agent restores it and makes its calendars writable again; that is refused with quota_exceeded when the agent, its calendars or their recurring series would put the organization over the plan\'s agent, calendar or recurring series limit. Requires an Organization key — Agent keys cannot mutate agents.',
     schema: schemas.UpdateAgentSchema,
-    annotations: { title: 'Update Agent', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    annotations: { title: 'Update Agent', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.updateAgent),
   },
   {
     name: 'delete_agent',
-    description: 'Decommission an agent. This marks the agent as decommissioned and revokes all of its Agent keys. Its calendars and events are kept but stop counting toward the plan\'s calendar limit, and they are read-only (writes return agent_inactive) until the agent is restored with update_agent. Requires an Organization key — Agent keys cannot delete agents.',
+    description: 'Decommission an agent. This marks the agent as decommissioned and revokes all of its Agent keys. Its calendars and events are kept but stop counting toward the plan\'s calendar limit, and they are read-only (writes return agent_inactive) until the agent is restored by setting its status again (active or paused). Requires an Organization key — Agent keys cannot delete agents.',
     schema: schemas.DeleteAgentSchema,
     annotations: { title: 'Delete Agent', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.deleteAgent),
@@ -260,7 +260,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
     name: 'create_connection_link',
     description: 'Request human setup of Google Calendar or Microsoft Outlook for a Chronary calendar. Give setup_url to a human; the agent never receives OAuth credentials, provider calendar names, or event data. When the human finishes, the linked account becomes a Connection, listed under Human calendars in the Chronary console. The secret URL is returned only on first creation. If reused=true and setup_url is null, retain the original URL or cancel this link and create a replacement.',
     schema: schemas.CreateConnectionLinkSchema,
-    annotations: { title: 'Create Human Calendar Setup Link', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    annotations: { title: 'Create Human Calendar Setup Link', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
     execute: createExecutor(fns.createConnectionLink),
   },
   {
@@ -281,7 +281,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   // ── Calendar context ───────────────────────────────────────────
   {
     name: 'get_calendar_context',
-    description: 'Get a calendar\'s temporal context in a single call: the current event (if one is happening now), the next upcoming event, recent past events, a short upcoming window, and the owning agent\'s status (idle/working/waiting/error). Use this to answer "what is this agent doing right now?" without issuing multiple list_events queries.',
+    description: 'Get a calendar\'s temporal context in a single call: the current event (if one is happening now), the next upcoming event, recent past events, a short upcoming window, and the owning agent\'s status (idle/working/waiting/error). Use this to answer "what is this agent doing right now?" without listing events separately. Recurring series appear as their occurrences (with recurringEventId); when events overlap, the current event is the most recently started.',
     schema: schemas.GetCalendarContextSchema,
     annotations: { title: 'Get Calendar Context', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     untrustedFields: EVENT_UNTRUSTED_FIELDS,
@@ -293,7 +293,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
     name: 'create_proposal',
     description: 'Create a scheduling proposal — send a set of candidate time slots to one or more participant agents so they can accept, decline, or counter-propose. The organizer agent owns the proposal; once every participant responds, the system auto-resolves to the highest-scoring slot (or cancels if all decline). Requires an Organization key and a Developer or Pro plan.',
     schema: schemas.CreateProposalSchema,
-    annotations: { title: 'Create Proposal', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    annotations: { title: 'Create Proposal', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     execute: createExecutor(fns.createProposal),
   },
   {
@@ -312,16 +312,16 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'respond_to_proposal',
-    description: 'Submit a response (accept / decline / counter) on behalf of one participant agent to an open proposal. An "accept" requires the slot id from the proposal; a "counter" can suggest alternative slots. When all participants have responded the proposal auto-resolves — no separate resolve call needed in the normal flow. Requires an Organization key and a Developer or Pro plan.',
+    description: 'Submit a response (accept / decline / counter) on behalf of one participant agent to an open proposal. An "accept" requires the slot id from the proposal; a "counter" can suggest alternative slots. When all participants have responded the proposal auto-resolves — no separate resolve call needed in the normal flow. The result is the saved response plus auto_resolved (confirmed / cancelled / null) and auto_resolve_error: if the auto-resolve fails, the response is still saved and auto_resolve_error says what to do next (usually: resolve the proposal once the cause is fixed). Do not respond again. Requires an Organization key and a Developer or Pro plan.',
     schema: schemas.RespondToProposalSchema,
-    annotations: { title: 'Respond To Proposal', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    annotations: { title: 'Respond To Proposal', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     execute: createExecutor(fns.respondToProposal),
   },
   {
     name: 'resolve_proposal',
     description: 'Force-resolve an open proposal using responses collected so far. Picks the highest-scoring slot among those accepted by the most participants and creates a confirmed calendar event. If every response was "decline", the proposal is cancelled instead. Use when you want to close out a proposal without waiting for every participant. Requires an Organization key and a Developer or Pro plan.',
     schema: schemas.ResolveProposalSchema,
-    annotations: { title: 'Resolve Proposal', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    annotations: { title: 'Resolve Proposal', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.resolveProposal),
   },
   {
@@ -337,7 +337,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
     name: 'set_availability_rules',
     description: 'Set or replace the availability rules on a calendar — buffer times before/after events and optional per-day working hours. When these rules are set, every availability query on this calendar automatically applies them (busy-block expansion for buffers, masking outside working hours). Upsert: overwrites any existing rules.',
     schema: schemas.SetAvailabilityRulesSchema,
-    annotations: { title: 'Set Availability Rules', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    annotations: { title: 'Set Availability Rules', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.setAvailabilityRules),
   },
   {
@@ -374,7 +374,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
     name: 'create_webhook',
     description: 'Create a webhook subscription so the org receives HTTP POST notifications when events occur (e.g. event.created, proposal.confirmed). The signing secret is returned ONCE in this response — store it to verify the HMAC-SHA256 signature on delivered payloads. Requires an Organization key.',
     schema: schemas.CreateWebhookSchema,
-    annotations: { title: 'Create Webhook', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    annotations: { title: 'Create Webhook', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
     execute: createExecutor(fns.createWebhook),
   },
   {
@@ -409,16 +409,16 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'send_test_webhook',
-    description: 'Send a signed sample payload of one event type to a webhook endpoint, to check that it receives and verifies deliveries. The delivery is marked is_test, carries the X-Chronary-Test: 1 header, makes one attempt, does not count toward the monthly delivery quota and is sent even when the endpoint is paused or disabled. The endpoint must subscribe to the event type. Poll get_webhook_delivery with the returned delivery_id for the result. Limited to 10 per minute. Requires an Organization key.',
+    description: 'Send a signed sample payload of one event type to a webhook endpoint, to check that it receives and verifies deliveries. The delivery is marked is_test, carries the X-Chronary-Test: 1 header, makes one attempt, does not count toward the monthly delivery quota and is sent even when the endpoint is paused or disabled. The endpoint must subscribe to the event type. The outcome is recorded on the returned delivery_id. Limited to 10 per minute. Requires an Organization key.',
     schema: schemas.SendTestWebhookSchema,
-    annotations: { title: 'Send Test Webhook', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    annotations: { title: 'Send Test Webhook', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
     execute: createExecutor(fns.sendTestWebhook),
   },
   {
     name: 'replay_webhook_delivery',
-    description: "Send a failed or dropped webhook delivery again, as a new delivery with a new delivery_id. The stored payload goes out unchanged (same event id), signed with the endpoint's current secret, with an X-Chronary-Replay-Of header naming the original delivery. Only failed or dropped deliveries that are not test events can be replayed, the endpoint must be active, and the payload must still be stored (30 days). The replay follows the normal retry schedule and counts toward the monthly delivery quota. Poll get_webhook_delivery with the returned delivery_id for the result. Limited to 30 per minute. Requires a Developer or Pro plan and an Organization key.",
+    description: "Send a failed or dropped webhook delivery again, as a new delivery with a new delivery_id. The stored payload goes out unchanged (same event id), signed with the endpoint's current secret, with an X-Chronary-Replay-Of header naming the original delivery. Only failed or dropped deliveries that are not test events can be replayed, the endpoint must be active, and the payload must still be stored (30 days). The replay follows the normal retry schedule and counts toward the monthly delivery quota. The outcome is recorded on the returned delivery_id. Limited to 30 per minute. Requires a Developer or Pro plan and an Organization key.",
     schema: schemas.ReplayWebhookDeliverySchema,
-    annotations: { title: 'Replay Webhook Delivery', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    annotations: { title: 'Replay Webhook Delivery', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
     execute: createExecutor(fns.replayWebhookDelivery),
   },
 
@@ -441,14 +441,14 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
     name: 'subscribe_ical',
     description: "Link an external iCal feed (e.g. a human's Google Calendar) to an agent's calendar so external events appear in availability calculations. The target calendar must be owned by the specified agent — create the calendar with that agent_id first (org-level calendars without an agent_id cannot host external iCal subscriptions; create a dedicated per-agent calendar for sync targets).",
     schema: schemas.SubscribeICalSchema,
-    annotations: { title: 'Subscribe iCal', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    annotations: { title: 'Subscribe iCal', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
     execute: createExecutor(fns.subscribeICal),
   },
   {
     name: 'update_ical_subscription',
     description: 'Update an external iCal feed subscription — change its label or its feed URL. Changing the URL forces a full re-sync on the next poll.',
     schema: schemas.UpdateICalSubscriptionSchema,
-    annotations: { title: 'Update iCal Subscription', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    annotations: { title: 'Update iCal Subscription', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
     execute: createExecutor(fns.updateICalSubscription),
   },
   {
@@ -460,23 +460,23 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'sync_ical_subscription',
-    description: 'Start an immediate fetch of an external iCal feed instead of waiting for the next scheduled poll. Returns {"status":"syncing"} as soon as the fetch has started; call get_ical_subscription a few seconds later to read last_synced_at and last_error. A paused feed must be resumed first; one manual sync per feed per minute.',
+    description: 'Start an immediate fetch of an external iCal feed instead of waiting for the next scheduled poll. Returns {"status":"syncing"} as soon as the fetch has started; last_synced_at and last_error on the subscription update when the fetch finishes, usually within a few seconds. A paused feed must be resumed first; one manual sync per feed per minute on paid plans, per 15 minutes on Free.',
     schema: schemas.SyncICalSubscriptionSchema,
-    annotations: { title: 'Sync iCal Subscription', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    annotations: { title: 'Sync iCal Subscription', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
     execute: createExecutor(fns.syncICalSubscription),
   },
   {
     name: 'pause_ical_subscription',
     description: 'Pause an external iCal feed subscription: scheduled polls skip it and manual syncs are refused until it is resumed. Busy blocks already imported stay. Pausing a paused feed changes nothing. Returns the subscription.',
     schema: schemas.PauseICalSubscriptionSchema,
-    annotations: { title: 'Pause iCal Subscription', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    annotations: { title: 'Pause iCal Subscription', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.pauseICalSubscription),
   },
   {
     name: 'resume_ical_subscription',
     description: 'Resume a paused or failing external iCal feed subscription: it returns to scheduled polling and its last_error is cleared. Resuming an active feed changes nothing. Returns the subscription.',
     schema: schemas.ResumeICalSubscriptionSchema,
-    annotations: { title: 'Resume iCal Subscription', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    annotations: { title: 'Resume iCal Subscription', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.resumeICalSubscription),
   },
 
@@ -485,7 +485,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
     name: 'create_scoped_key',
     description: 'Create an Agent key (chr_ak_*) that can only act on behalf of a single agent. Use this to self-provision or rotate per-agent credentials. The plaintext key is returned exactly once in the response — store it immediately, it cannot be retrieved later. Requires an Organization key.',
     schema: schemas.CreateScopedKeySchema,
-    annotations: { title: 'Create Scoped Key', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    annotations: { title: 'Create Scoped Key', readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     execute: createExecutor(fns.createScopedKey),
   },
   {
@@ -517,7 +517,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
     name: 'accept_terms',
     description: 'Re-accept the current Chronary terms of service on behalf of the calling org. Use this when responses carry the Chronary-Terms-Upgrade-Required header — a material ToS bump otherwise leaves MCP-only agents stuck without a console session. Pass the current tos_version (read it from GET /v1/auth/terms/current). Requires an Organization key (chr_sk_*); Agent keys cannot accept org-wide terms.',
     schema: schemas.AcceptTermsSchema,
-    annotations: { title: 'Accept Terms', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    annotations: { title: 'Accept Terms', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.acceptTerms),
   },
 
@@ -547,9 +547,9 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'request_upgrade',
-    description: 'Ask your human to upgrade this Chronary account to the next plan up (Free to Developer, Developer to Pro). Returns approval_url — give it to your human; only a human can pay. If reused=true a request is already pending — do not call again; poll get_upgrade_request at most once a minute. The link opens the Billing page in the Chronary console.',
+    description: 'Ask your human to upgrade this Chronary account to the next plan up. Returns approval_url — give it to your human; only a human can pay. If reused=true a request is already pending — do not call again; check the status of the request at most once a minute. The link opens the Billing page in the Chronary console.',
     schema: schemas.RequestUpgradeSchema,
-    annotations: { title: 'Request Upgrade', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    annotations: { title: 'Request Upgrade', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.requestUpgrade),
   },
   {
@@ -563,7 +563,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
     name: 'cancel_upgrade_request',
     description: 'Withdraw a pending upgrade request (for example, the blocker went away). The approval URL stops working. Fails with upgrade_request_not_pending if the request is already completed, declined, canceled, or expired.',
     schema: schemas.CancelUpgradeRequestSchema,
-    annotations: { title: 'Cancel Upgrade Request', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    annotations: { title: 'Cancel Upgrade Request', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.cancelUpgradeRequest),
   },
 ];

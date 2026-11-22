@@ -273,6 +273,26 @@ describe('schemas', () => {
       expect(result.success).toBe(true);
     });
 
+    // #2525: same availability_constraints shape the hosted API validates.
+    it('CreateBookingPageSchema accepts mon..sun HH:MM constraints and null', () => {
+      for (const availability_constraints of [{ mon: { start: '09:00', end: '17:00' } }, null, undefined]) {
+        const result = schemas.CreateBookingPageSchema.safeParse({ calendar_id: 'cal_1', title: 'Intro', availability_constraints });
+        expect(result.success).toBe(true);
+      }
+    });
+
+    it('CreateBookingPageSchema rejects constraints the hosted API rejects', () => {
+      for (const availability_constraints of [
+        { monday: { start: '09:00', end: '17:00' } },
+        {},
+        { mon: { start: '9am', end: '5pm' } },
+        { mon: { start: '17:00', end: '09:00' } },
+      ]) {
+        const result = schemas.CreateBookingPageSchema.safeParse({ calendar_id: 'cal_1', title: 'Intro', availability_constraints });
+        expect(result.success, JSON.stringify(availability_constraints)).toBe(false);
+      }
+    });
+
     it('SubscribeICalSchema requires agent_id, calendar_id, and url', () => {
       const result = schemas.SubscribeICalSchema.safeParse({
         agent_id: 'agt_123',

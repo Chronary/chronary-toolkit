@@ -2,6 +2,14 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
+## 1.7.3 — unreleased
+
+- Every tool that is not read-only now sets `destructiveHint: true` (25 tools changed: creates, updates, `confirm_event`, the proposal writes, `set_availability_rules`, the webhook test and replay, the iCal writes, `create_scoped_key`, `accept_terms` and the upgrade-request writes). The Claude connectors directory requires every tool to have a `title` and `readOnlyHint: true` or `destructiveHint: true`. Read-only tools are unchanged; the hosted MCP server matches (#2608).
+- `create_booking_page` validates `availability_constraints` like the hosted API: keys `mon` to `sun` only, each `{"start":"HH:MM","end":"HH:MM"}` in 24-hour time with end after start, at least one day (or `null`). Input the API rejects (`{"monday":…}`, `{}`, `"9am"`, end before start) is now refused client-side instead of being accepted; it used to create a page that offered no slots or failed to load (#2525).
+- `respond_to_proposal` says what the result carries: the saved response plus `auto_resolved` and `auto_resolve_error`. If the auto-resolve fails, the response is still saved and the tool succeeds; `auto_resolve_error` says what to do next (usually resolve the proposal), so don't respond again. `create_proposal` and `respond_to_proposal` reject a slot that does not end after it starts before sending it. Same as the hosted server (#2538, #2540).
+- Tool descriptions and the `schedule_event` prompt argument no longer name other tools, as the Claude connectors directory review requires (#2592). Unreleased until now.
+- `get_calendar_context` says it includes the occurrences of recurring series (#2529). Unreleased until now.
+
 ## 1.7.2 — 2026-11-17
 
 - The `request_upgrade` description says the request is for the next plan up (Free to Developer, Developer to Pro), not always Pro (#2397).
