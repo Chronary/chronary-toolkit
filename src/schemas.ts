@@ -55,8 +55,9 @@ export const ListCalendarsSchema = z.object({
   agent_id: optionalResourceId().describe('Filter to calendars owned by this agent. Organization keys only — Agent keys are always limited to their own agent and ignore this.'),
   include: z.enum(['all']).optional().describe('Pass "all" to include calendars across all agents (Organization keys only)'),
   limit: z.number().int().min(1).max(200).default(50).describe('Max results to return'),
-  offset: z.number().int().min(0).default(0).describe('Pagination offset, at most 10000'),
-});
+  offset: z.number().int().min(0).default(0).describe('Pagination offset, at most 10000. Cannot be combined with cursor'),
+  cursor: z.string().min(1).max(1024).optional().describe('The next_cursor from the previous page'),
+}).refine((v) => v.cursor === undefined || !v.offset, { message: 'cursor and offset cannot be combined', path: ['cursor'] });
 
 export const GetCalendarSchema = z.object({
   calendar_id: resourceId().describe('Calendar ID to fetch'),
@@ -141,8 +142,8 @@ export const DeleteBookingPageSchema = z.object({
 // ── Events ─────────────────────────────────────────────────────
 
 export const ListEventsSchema = z.object({
-  calendar_id: optionalResourceId().describe('Calendar ID to list events from. Provide this or agent_id.'),
-  agent_id: optionalResourceId().describe('Agent ID to list events for across all of the agent\'s calendars. Provide this or calendar_id.'),
+  calendar_id: optionalResourceId().describe('Calendar ID to list events from. Provide this or agent_id, not both.'),
+  agent_id: optionalResourceId().describe('Agent ID to list events for across all of the agent\'s calendars. Provide this or calendar_id, not both.'),
   start_after: z.string().datetime({ offset: true }).optional().describe('Only events starting after this ISO 8601 time'),
   start_before: z.string().datetime({ offset: true }).optional().describe('Only events starting before this ISO 8601 time'),
   status: z.enum(['confirmed', 'tentative', 'cancelled', 'hold']).optional().describe('Filter by event status'),
@@ -162,8 +163,9 @@ export const ListOrgEventsSchema = z.object({
   q: z.string().optional().describe('Case-insensitive title search. Requires start_after and start_before at most 31 days apart'),
   expand: z.boolean().default(false).describe('Expand recurring series into individual occurrences within the window. Requires both start_after and start_before (max 366 days apart).'),
   limit: z.number().int().min(1).max(100).default(50).describe('Max results to return (1-100)'),
-  offset: z.number().int().min(0).default(0).describe('Pagination offset, at most 10000'),
-});
+  offset: z.number().int().min(0).default(0).describe('Pagination offset, at most 10000. Cannot be combined with cursor'),
+  cursor: z.string().min(1).max(1024).optional().describe('The next_cursor from the previous page'),
+}).refine((v) => v.cursor === undefined || !v.offset, { message: 'cursor and offset cannot be combined', path: ['cursor'] });
 
 export const GetEventSchema = z.object({
   event_id: resourceId().describe('Event ID to retrieve'),
@@ -232,8 +234,9 @@ export const ListAgentsSchema = z.object({
   type: z.enum(['ai', 'human', 'resource']).optional().describe('Filter by agent type'),
   status: z.enum(['active', 'paused', 'decommissioned']).optional().describe('Filter by status'),
   limit: z.number().int().min(1).max(200).default(50).describe('Max results to return'),
-  offset: z.number().int().min(0).default(0).describe('Pagination offset, at most 10000'),
-});
+  offset: z.number().int().min(0).default(0).describe('Pagination offset, at most 10000. Cannot be combined with cursor'),
+  cursor: z.string().min(1).max(1024).optional().describe('The next_cursor from the previous page'),
+}).refine((v) => v.cursor === undefined || !v.offset, { message: 'cursor and offset cannot be combined', path: ['cursor'] });
 
 export const GetAgentSchema = z.object({
   agent_id: resourceId().describe('Agent ID to fetch'),

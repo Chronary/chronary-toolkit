@@ -48,6 +48,8 @@ const tools = new ChronaryToolkit({
 const llm = new ChatOpenAI({ model: 'gpt-4o' }).bindTools(tools);
 ```
 
+`getTools()` returns LangChain `StructuredTool`s (`@langchain/core` is a peer dependency of this entry), so the same `tools` also go to `createReactAgent` or `AgentExecutor`. `invoke()` resolves to the result as a JSON string. An API error, or input that breaks a rule JSON Schema cannot express, resolves to a JSON error object (`{"error": ..., "message": ...}`) for the model to read; input that does not match the tool's advertised JSON Schema makes LangChain throw a `ToolInputParsingException` before the tool runs. Needs `@langchain/core` 0.3.44 or later.
+
 ### OpenAI function calling
 
 ```ts

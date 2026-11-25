@@ -8,7 +8,7 @@ vi.mock('@chronary/sdk', () => ({
 const config = { apiKey: 'chr_sk_xxx123' };
 
 describe('LangChain adapter', () => {
-  it('returns array of tools with name, description, schema, call', () => {
+  it('returns array of tools with name, description, schema, invoke', () => {
     const toolkit = new ChronaryToolkit(config);
     const tools = toolkit.getTools();
     expect(tools).toHaveLength(65);
@@ -16,7 +16,7 @@ describe('LangChain adapter', () => {
       expect(tool.name).toBeTruthy();
       expect(tool.description).toBeTruthy();
       expect(tool.schema).toBeTruthy();
-      expect(typeof tool.call).toBe('function');
+      expect(typeof tool.invoke).toBe('function');
     }
   });
 

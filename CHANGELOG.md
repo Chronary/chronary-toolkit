@@ -2,7 +2,15 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
-## 1.7.5 — unreleased
+## 1.8.0 — unreleased
+
+- **`list_events` refuses `calendar_id` and `agent_id` together (#2721).** It listed the agent's events and dropped the calendar silently, so the model could read the wrong calendar as free. It now returns a structured error (`Provide calendar_id or agent_id, not both`); the field descriptions say so.
+- **LangChain adapter returns real `StructuredTool`s (#2683).** `getTools()` from `@chronary/toolkit/langchain` returned plain `{ name, description, schema, call }` objects, so `createReactAgent` and `AgentExecutor` could not run them, and `bindTools` threw "Transforms cannot be represented in JSON Schema" for the 11 tools whose schemas use `z.preprocess`. Each tool is now a `DynamicStructuredTool` from `@langchain/core/tools` (a peer dependency of this entry) advertising the input side of its schema as JSON Schema; `invoke()` runs the Zod schema, so the #2519 ID checks apply, and resolves to the result as a JSON string. An API error, or input that breaks a rule JSON Schema cannot express, resolves to a structured JSON error; input that does not match the advertised JSON Schema makes LangChain throw a `ToolInputParsingException` before the tool runs. `LangChainTool` is now that type; the deprecated `.call()` of `StructuredTool` still works. The `@langchain/core` peer range is now `>=0.3.44` (earlier 0.3 releases replace a JSON Schema tool schema with an empty object).
+- `list_org_events`, `list_calendars` and `list_agents` take `cursor` and return `next_cursor` (#2691); `list_org_events`'s description and the hosted server already said so for that tool. Pages past the API's 10,000-row `offset` cap. A `cursor` with a non-zero `offset` is refused. Requires `@chronary/sdk` 0.14.0.
+- **Mastra adapter works on `@mastra/core` 1.x (#2682).** Mastra 1.x calls a tool's `execute` with the arguments directly, but the adapter read them from `{ context }` (the pre-1.0 shape), so every tool call failed with `Cannot read properties of undefined`. `execute` now accepts both shapes. `MastraTool['execute']` is typed `(input, options?) => Promise<unknown>`.
+- `find_meeting_time` with `calendars: []` no longer fails (#2557): an empty list now means "no extra calendars" and is left out of the request, instead of reaching the API as `calendars=` and a 400. Also fixed in `@chronary/sdk` (`availability.check()`).
+
+## 1.7.5 — 2026-11-22
 
 - `get_audit_log` accepts `actor_type: "oauth_app"`: entries made by an app connected to the hosted MCP server by signing in, such as Claude (#2254). Same as the hosted server.
 

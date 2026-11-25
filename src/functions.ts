@@ -17,14 +17,29 @@ async function fetchPage(
   return { data: page.data, total: page.total, has_more: page.hasMore };
 }
 
+// Like fetchPage, for a tool that takes `cursor` (#2691): pages by cursor
+// when given one and returns the list's `next_cursor`, which reaches past the
+// API's 10,000-row offset cap.
+async function fetchCursorPage(
+  iterator: AsyncIterable<unknown> & {
+    getPage(offset?: number, limit?: number, cursor?: string): Promise<{ data: unknown[]; total: number; hasMore: boolean; next_cursor?: string | null }>;
+  },
+  offset?: number,
+  limit?: number,
+  cursor?: string,
+) {
+  const page = await iterator.getPage(offset ?? 0, limit, cursor);
+  return { data: page.data, total: page.total, has_more: page.hasMore, next_cursor: page.next_cursor ?? null };
+}
+
 // ── Calendars ──────────────────────────────────────────────────
 
 export const listCalendars = safeFunc(async (ctx: Ctx<{
-  agent_id?: string; include?: 'all'; limit?: number; offset?: number;
+  agent_id?: string; include?: 'all'; limit?: number; offset?: number; cursor?: string;
 }>) => {
   const { client, params } = ctx;
   const iter = client.calendars.list({ agentId: params.agent_id, include: params.include, limit: params.limit });
-  return fetchPage(iter, params.offset, params.limit);
+  return fetchCursorPage(iter, params.offset, params.limit, params.cursor);
 });
 
 export const getCalendar = safeFunc(async (ctx: Ctx<{ calendar_id: string }>) => {
@@ -107,6 +122,12 @@ export const listEvents = safeFunc(async (ctx: Ctx<{
   if (!params.calendar_id && !params.agent_id) {
     throw new Error('Provide calendar_id or agent_id');
   }
+  // Both used to list the agent's events and drop the calendar silently
+  // (#2721). Not a zod refine: the MCP adapter registers the schema's shape,
+  // which would skip it.
+  if (params.calendar_id && params.agent_id) {
+    throw new Error('Provide calendar_id or agent_id, not both');
+  }
   const iter = client.events.list({
     calendarId: params.calendar_id,
     agentId: params.agent_id,
@@ -123,7 +144,7 @@ export const listEvents = safeFunc(async (ctx: Ctx<{
 export const listOrgEvents = safeFunc(async (ctx: Ctx<{
   calendar_ids?: string[]; agent_id?: string; start_after?: string; start_before?: string;
   status?: 'confirmed' | 'tentative' | 'cancelled' | 'hold'; source?: 'internal' | 'external_ical';
-  q?: string; expand?: boolean; limit?: number; offset?: number;
+  q?: string; expand?: boolean; limit?: number; offset?: number; cursor?: string;
 }>) => {
   const { client, params } = ctx;
   const iter = client.events.listAll({
@@ -137,7 +158,7 @@ export const listOrgEvents = safeFunc(async (ctx: Ctx<{
     expand: params.expand,
     limit: params.limit,
   });
-  return fetchPage(iter, params.offset, params.limit);
+  return fetchCursorPage(iter, params.offset, params.limit, params.cursor);
 });
 
 export const getEvent = safeFunc(async (ctx: Ctx<{ calendar_id?: string; event_id: string }>) => {
@@ -209,10 +230,11 @@ export const createAgent = safeFunc(async (ctx: Ctx<{
 
 export const listAgents = safeFunc(async (ctx: Ctx<{
   type?: 'ai' | 'human' | 'resource'; status?: 'active' | 'paused' | 'decommissioned'; limit?: number; offset?: number;
+  cursor?: string;
 }>) => {
   const { client, params } = ctx;
   const iter = client.agents.list({ type: params.type, status: params.status, limit: params.limit });
-  return fetchPage(iter, params.offset, params.limit);
+  return fetchCursorPage(iter, params.offset, params.limit, params.cursor);
 });
 
 export const getAgent = safeFunc(async (ctx: Ctx<{ agent_id: string }>) => {
@@ -280,7 +302,8 @@ export const findMeetingTime = safeFunc(async (ctx: Ctx<{
     end,
     duration: params.duration,
     slot_duration: params.slot_duration,
-    calendars: params.calendars,
+    // [] means "no extra calendars"; the API rejects an empty `calendars=` (#2557).
+    calendars: params.calendars?.length ? params.calendars : undefined,
     include_busy: params.include_busy,
   });
 });

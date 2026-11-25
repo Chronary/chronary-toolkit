@@ -5,7 +5,26 @@ export interface MastraTool {
   id: string;
   description: string;
   inputSchema: ToolDefinition['schema'];
-  execute: (context: { context: Record<string, unknown> }) => Promise<unknown>;
+  /**
+   * Accepts both Mastra call shapes: 1.x passes the tool arguments directly
+   * (`execute(args, options)`); before 1.0 they came wrapped as
+   * `execute({ context: args, ... })`.
+   */
+  execute: (input: Record<string, unknown>, options?: unknown) => Promise<unknown>;
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * The tool arguments from either Mastra call shape (#2682). No Chronary tool
+ * takes a top-level `context` argument (a test guards this), so an object
+ * under `context` can only be the pre-1.0 wrapper.
+ */
+function toolArgs(input: unknown): Record<string, unknown> {
+  if (!isPlainObject(input)) return {};
+  return isPlainObject(input.context) ? input.context : input;
 }
 
 /**
@@ -32,8 +51,8 @@ export class ChronaryToolkit extends MapToolkit<MastraTool> {
       id: def.name,
       description: def.description,
       inputSchema: def.schema,
-      execute: async ({ context }: { context: Record<string, unknown> }) => {
-        const result = await def.execute(client, context);
+      execute: async (input: Record<string, unknown>) => {
+        const result = await def.execute(client, toolArgs(input));
         if (result.isError) throw new Error(typeof result.result === 'string' ? result.result : JSON.stringify(result.result));
         return result.result;
       },

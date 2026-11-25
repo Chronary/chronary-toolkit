@@ -1,7 +1,8 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PlanRequiredError, type Chronary } from '@chronary/sdk';
 import { mockChronaryClient, FIXTURES } from './helpers';
 import * as fns from '../src/functions';
+import * as schemas from '../src/schemas';
 
 describe('tool functions', () => {
   let client: ReturnType<typeof mockChronaryClient>;
@@ -144,6 +145,13 @@ describe('tool functions', () => {
     expect(client.events.updateById).toHaveBeenCalledWith('evt_1', expect.objectContaining({ recurrence_rule: null }));
   });
 
+  it('listEvents refuses calendar_id and agent_id together (#2721)', async () => {
+    const result = await fns.listEvents({ client: asClient(), params: { calendar_id: 'cal_1', agent_id: 'agt_1' } });
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.result)).toContain('not both');
+    expect(client.events.list).not.toHaveBeenCalled();
+  });
+
   it('listEvents forwards expand to events.list', async () => {
     await fns.listEvents({ client: asClient(), params: {
       calendar_id: 'cal_1', start_after: '2026-04-01T00:00:00Z', start_before: '2026-05-01T00:00:00Z', expand: true,
@@ -162,6 +170,47 @@ describe('tool functions', () => {
     expect(client.events.listAll).toHaveBeenCalledWith(expect.objectContaining({
       calendar_id: ['cal_1', 'cal_2'], agent_id: 'agt_1', q: 'standup', limit: 20,
     }));
+  });
+
+  // #2691: list_org_events pages past the 10,000-row offset cap with the
+  // returned next_cursor, as the hosted tool does.
+  it('listOrgEvents returns next_cursor and pages with a cursor', async () => {
+    const getPage = vi.fn().mockResolvedValue({ data: [FIXTURES.event], total: 12000, hasMore: true, next_cursor: 'cur_2', limit: 1, offset: 0 });
+    client.events.listAll.mockReturnValue({ getPage, [Symbol.asyncIterator]: vi.fn() });
+    const result = await fns.listOrgEvents({ client: asClient(), params: { limit: 1, cursor: 'cur_1' } });
+    expect(getPage).toHaveBeenCalledWith(0, 1, 'cur_1');
+    expect(result).toEqual({
+      result: { data: [FIXTURES.event], total: 12000, has_more: true, next_cursor: 'cur_2' },
+      isError: false,
+    });
+  });
+
+  it('listCalendars and listAgents return next_cursor and page with a cursor', async () => {
+    const page = { data: [], total: 12000, hasMore: true, next_cursor: 'cur_2', limit: 1, offset: 0 };
+    const calPage = vi.fn().mockResolvedValue(page);
+    const agentPage = vi.fn().mockResolvedValue(page);
+    client.calendars.list.mockReturnValue({ getPage: calPage, [Symbol.asyncIterator]: vi.fn() });
+    client.agents.list.mockReturnValue({ getPage: agentPage, [Symbol.asyncIterator]: vi.fn() });
+
+    const cals = await fns.listCalendars({ client: asClient(), params: { limit: 1, cursor: 'cur_1' } });
+    const agents = await fns.listAgents({ client: asClient(), params: { limit: 1, cursor: 'cur_1' } });
+    expect(calPage).toHaveBeenCalledWith(0, 1, 'cur_1');
+    expect(agentPage).toHaveBeenCalledWith(0, 1, 'cur_1');
+    for (const r of [cals, agents]) {
+      expect(r).toEqual({ result: { data: [], total: 12000, has_more: true, next_cursor: 'cur_2' }, isError: false });
+    }
+  });
+
+  it('ListCalendarsSchema and ListAgentsSchema refuse a cursor with a non-zero offset', () => {
+    for (const schema of [schemas.ListCalendarsSchema, schemas.ListAgentsSchema]) {
+      expect(schema.safeParse({ cursor: 'c' }).success).toBe(true);
+      expect(schema.safeParse({ cursor: 'c', offset: 50 }).success).toBe(false);
+    }
+  });
+
+  it('ListOrgEventsSchema refuses a cursor combined with a non-zero offset', () => {
+    expect(schemas.ListOrgEventsSchema.safeParse({ cursor: 'c', offset: 0 }).success).toBe(true);
+    expect(schemas.ListOrgEventsSchema.safeParse({ cursor: 'c', offset: 50 }).success).toBe(false);
   });
 
   it('cancelEvent with occurrence_start cancels one occurrence and returns the updated master', async () => {
@@ -279,6 +328,22 @@ describe('tool functions', () => {
     expect(client.availability.check).toHaveBeenCalledWith(expect.objectContaining({
       agents: ['agt_1', 'agt_2'], start: '2026-04-15T00:00:00Z', end: '2026-04-16T00:00:00Z',
     }));
+  });
+
+  it('findMeetingTime treats calendars: [] as no extra calendars (#2557)', async () => {
+    // The schema accepts [] (models send it for "none"); `calendars=` would be a 400.
+    expect(schemas.FindMeetingTimeSchema.safeParse({ agents: ['agt_1'], calendars: [] }).success).toBe(true);
+    await fns.findMeetingTime({ client: asClient(), params: {
+      agents: ['agt_1'], start: '2026-04-15T00:00:00Z', end: '2026-04-16T00:00:00Z', calendars: [],
+    } });
+    expect(client.availability.check).toHaveBeenCalledWith(expect.objectContaining({ calendars: undefined }));
+  });
+
+  it('findMeetingTime forwards a non-empty calendars list', async () => {
+    await fns.findMeetingTime({ client: asClient(), params: {
+      agents: ['agt_1'], start: '2026-04-15T00:00:00Z', end: '2026-04-16T00:00:00Z', calendars: ['cal_1'],
+    } });
+    expect(client.availability.check).toHaveBeenCalledWith(expect.objectContaining({ calendars: ['cal_1'] }));
   });
 
   it('findMeetingTime errors when agents/agent_ids is missing', async () => {
