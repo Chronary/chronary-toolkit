@@ -233,6 +233,7 @@ export const CreateAgentSchema = z.object({
 export const ListAgentsSchema = z.object({
   type: z.enum(['ai', 'human', 'resource']).optional().describe('Filter by agent type'),
   status: z.enum(['active', 'paused', 'decommissioned']).optional().describe('Filter by status'),
+  include_decommissioned: z.boolean().optional().describe('Include decommissioned (deleted) agents. Default false; ignored when status is set'),
   limit: z.number().int().min(1).max(200).default(50).describe('Max results to return'),
   offset: z.number().int().min(0).default(0).describe('Pagination offset, at most 10000. Cannot be combined with cursor'),
   cursor: z.string().min(1).max(1024).optional().describe('The next_cursor from the previous page'),

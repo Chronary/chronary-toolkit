@@ -229,11 +229,13 @@ export const createAgent = safeFunc(async (ctx: Ctx<{
 });
 
 export const listAgents = safeFunc(async (ctx: Ctx<{
-  type?: 'ai' | 'human' | 'resource'; status?: 'active' | 'paused' | 'decommissioned'; limit?: number; offset?: number;
-  cursor?: string;
+  type?: 'ai' | 'human' | 'resource'; status?: 'active' | 'paused' | 'decommissioned'; include_decommissioned?: boolean;
+  limit?: number; offset?: number; cursor?: string;
 }>) => {
   const { client, params } = ctx;
-  const iter = client.agents.list({ type: params.type, status: params.status, limit: params.limit });
+  const iter = client.agents.list({
+    type: params.type, status: params.status, include_decommissioned: params.include_decommissioned, limit: params.limit,
+  });
   return fetchCursorPage(iter, params.offset, params.limit, params.cursor);
 });
 

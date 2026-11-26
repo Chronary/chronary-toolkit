@@ -76,7 +76,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   // ── Calendars ──────────────────────────────────────────────────
   {
     name: 'list_calendars',
-    description: 'List calendars in the org. Organization keys see every calendar (agent-owned and shared); Agent keys see only their own agent\'s calendars. Use this to discover calendar IDs before creating or listing events.',
+    description: 'List calendars in the org, newest first. Organization keys get shared (org-level) calendars by default; pass include "all" to add every agent\'s calendars, or agent_id for one agent\'s. Agent keys see only their own agent\'s calendars. Use this to discover calendar IDs before creating or listing events. Page with next_cursor.',
     schema: schemas.ListCalendarsSchema,
     annotations: { title: 'List Calendars', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.listCalendars),
@@ -214,7 +214,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'list_agents',
-    description: 'List all agents in your organization',
+    description: 'List the agents in your organization, newest first. Decommissioned agents are left out unless include_decommissioned is true or status is set. Page with next_cursor.',
     schema: schemas.ListAgentsSchema,
     annotations: { title: 'List Agents', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.listAgents),

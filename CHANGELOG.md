@@ -2,7 +2,11 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
-## 1.8.0 — unreleased
+## 1.8.1 — unreleased
+
+- `list_agents` takes `include_decommissioned` (#2749), as `GET /v1/agents` does: decommissioned agents are left out unless it is `true` or `status` is set. Its description now says so, and that the list is newest first and pages with `next_cursor`. `list_calendars`' description now says that an Organization key gets shared calendars unless it passes `include: "all"` or `agent_id` (it said every calendar, which was never the behaviour). The hosted MCP server's `list_agents` and `list_calendars` now match the toolkit's (same parameters, `cursor` and `next_cursor`).
+
+## 1.8.0 — 2026-11-24
 
 - **`list_events` refuses `calendar_id` and `agent_id` together (#2721).** It listed the agent's events and dropped the calendar silently, so the model could read the wrong calendar as free. It now returns a structured error (`Provide calendar_id or agent_id, not both`); the field descriptions say so.
 - **LangChain adapter returns real `StructuredTool`s (#2683).** `getTools()` from `@chronary/toolkit/langchain` returned plain `{ name, description, schema, call }` objects, so `createReactAgent` and `AgentExecutor` could not run them, and `bindTools` threw "Transforms cannot be represented in JSON Schema" for the 11 tools whose schemas use `z.preprocess`. Each tool is now a `DynamicStructuredTool` from `@langchain/core/tools` (a peer dependency of this entry) advertising the input side of its schema as JSON Schema; `invoke()` runs the Zod schema, so the #2519 ID checks apply, and resolves to the result as a JSON string. An API error, or input that breaks a rule JSON Schema cannot express, resolves to a structured JSON error; input that does not match the advertised JSON Schema makes LangChain throw a `ToolInputParsingException` before the tool runs. `LangChainTool` is now that type; the deprecated `.call()` of `StructuredTool` still works. The `@langchain/core` peer range is now `>=0.3.44` (earlier 0.3 releases replace a JSON Schema tool schema with an empty object).

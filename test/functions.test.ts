@@ -260,6 +260,20 @@ describe('tool functions', () => {
     expect(client.agents.list).toHaveBeenCalled();
   });
 
+  it('listAgents passes include_decommissioned to agents.list (#2749)', async () => {
+    await fns.listAgents({ client: asClient(), params: { limit: 10, include_decommissioned: true } });
+    expect(client.agents.list).toHaveBeenLastCalledWith({
+      type: undefined, status: undefined, include_decommissioned: true, limit: 10,
+    });
+    await fns.listAgents({ client: asClient(), params: { limit: 10 } });
+    expect(client.agents.list).toHaveBeenLastCalledWith(expect.objectContaining({ include_decommissioned: undefined }));
+  });
+
+  it('ListAgentsSchema accepts include_decommissioned as a boolean only (#2749)', () => {
+    expect(schemas.ListAgentsSchema.safeParse({ include_decommissioned: true }).success).toBe(true);
+    expect(schemas.ListAgentsSchema.safeParse({ include_decommissioned: 'yes' }).success).toBe(false);
+  });
+
   it('getAgent calls agents.get(agent_id)', async () => {
     await fns.getAgent({ client: asClient(), params: { agent_id: 'agt_1' } });
     expect(client.agents.get).toHaveBeenCalledWith('agt_1');
