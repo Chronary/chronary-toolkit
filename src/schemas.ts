@@ -68,6 +68,7 @@ export const CreateCalendarSchema = z.object({
   agent_id: optionalResourceId().describe('Agent ID to own this calendar (omit for org-level)'),
   timezone: z.string().min(1).max(64).describe('IANA timezone (e.g. America/New_York)'),
   default_reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('Default reminder offsets in minutes before start, inherited by events on this calendar that don\'t set their own. Omit or null to use the system default (10 min); [] for no reminders.'),
+  prevent_overlaps: z.boolean().optional().describe('true: the calendar refuses any event that would overlap an active event on it (double-booking guarantee, every plan). Default false.'),
 });
 
 export const UpdateCalendarSchema = z.object({
@@ -76,6 +77,7 @@ export const UpdateCalendarSchema = z.object({
   timezone: z.string().min(1).max(64).optional().describe('New IANA timezone (e.g. America/New_York)'),
   agent_status: z.enum(['idle', 'working', 'waiting', 'error']).optional().describe('Owning agent\'s status'),
   default_reminders: z.array(z.number().int().min(1).max(40320)).max(5).nullable().optional().describe('Default reminder offsets in minutes; null for system default, [] for none'),
+  prevent_overlaps: z.boolean().optional().describe('true: the calendar refuses any event that would overlap an active event on it (double-booking guarantee). Refused while the calendar already holds overlapping events or a running recurring series.'),
   metadata: z.record(z.string(), z.unknown()).optional().describe('Arbitrary metadata (max 16KB)'),
 });
 

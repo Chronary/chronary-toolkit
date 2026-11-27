@@ -97,7 +97,7 @@ const RAW_TOOL_DEFINITIONS: ToolDefinition[] = [
   },
   {
     name: 'update_calendar',
-    description: 'Update a calendar\'s name, timezone, agent status, default reminders, or metadata. Agent keys may only update calendars owned by their agent.',
+    description: 'Update a calendar\'s name, timezone, agent status, default reminders, double-booking protection (prevent_overlaps), or metadata. Agent keys may only update calendars owned by their agent.',
     schema: schemas.UpdateCalendarSchema,
     annotations: { title: 'Update Calendar', readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     execute: createExecutor(fns.updateCalendar),

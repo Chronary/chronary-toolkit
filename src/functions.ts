@@ -47,7 +47,8 @@ export const getCalendar = safeFunc(async (ctx: Ctx<{ calendar_id: string }>) =>
 });
 
 export const createCalendar = safeFunc(async (ctx: Ctx<{
-  name: string; timezone: string; agent_id?: string; default_reminders?: number[] | null; metadata?: Record<string, unknown>;
+  name: string; timezone: string; agent_id?: string; default_reminders?: number[] | null;
+  prevent_overlaps?: boolean; metadata?: Record<string, unknown>;
 }>) => {
   const { client, params } = ctx;
   return client.calendars.create({
@@ -55,6 +56,7 @@ export const createCalendar = safeFunc(async (ctx: Ctx<{
     timezone: params.timezone,
     agentId: params.agent_id,
     default_reminders: params.default_reminders,
+    prevent_overlaps: params.prevent_overlaps,
     metadata: params.metadata,
   });
 });
@@ -62,7 +64,7 @@ export const createCalendar = safeFunc(async (ctx: Ctx<{
 export const updateCalendar = safeFunc(async (ctx: Ctx<{
   calendar_id: string; name?: string; timezone?: string;
   agent_status?: 'idle' | 'working' | 'waiting' | 'error';
-  default_reminders?: number[] | null; metadata?: Record<string, unknown>;
+  default_reminders?: number[] | null; prevent_overlaps?: boolean; metadata?: Record<string, unknown>;
 }>) => {
   const { client, params } = ctx;
   const { calendar_id, ...updates } = params;

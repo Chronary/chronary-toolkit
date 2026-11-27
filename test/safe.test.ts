@@ -70,6 +70,21 @@ describe('safeFunc', () => {
     });
   });
 
+  it('keeps code and conflicting_event_ids on a 409 event_conflict', async () => {
+    const fn = safeFunc(async () => {
+      throw new ChronaryError('overlap', 409, 'req_3', undefined, 'conflict', {
+        type: 'conflict', code: 'event_conflict', conflicting_event_ids: ['evt_1', 'evt_2'],
+      });
+    });
+    const result = await fn({});
+    expect(result.result).toEqual({
+      error: 'conflict',
+      message: 'overlap',
+      code: 'event_conflict',
+      conflicting_event_ids: ['evt_1', 'evt_2'],
+    });
+  });
+
   it('wraps generic Error', async () => {
     const fn = safeFunc(async () => { throw new Error('network down'); });
     const result = await fn({});

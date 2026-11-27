@@ -42,6 +42,22 @@ describe('tool functions', () => {
     expect(client.calendars.update).toHaveBeenCalledWith('cal_1', expect.objectContaining({ agent_status: 'working' }));
   });
 
+  it('createCalendar forwards prevent_overlaps', async () => {
+    await fns.createCalendar({ client: asClient(), params: { name: 'Desk', timezone: 'UTC', prevent_overlaps: true } });
+    expect(client.calendars.create).toHaveBeenCalledWith(expect.objectContaining({ prevent_overlaps: true }));
+  });
+
+  it('updateCalendar forwards prevent_overlaps', async () => {
+    await fns.updateCalendar({ client: asClient(), params: { calendar_id: 'cal_1', prevent_overlaps: false } });
+    expect(client.calendars.update).toHaveBeenCalledWith('cal_1', { prevent_overlaps: false });
+  });
+
+  it('the calendar tool schemas accept prevent_overlaps and reject a non-boolean', () => {
+    expect(schemas.CreateCalendarSchema.safeParse({ name: 'c', timezone: 'UTC', prevent_overlaps: true }).success).toBe(true);
+    expect(schemas.UpdateCalendarSchema.safeParse({ calendar_id: 'cal_1', prevent_overlaps: false }).success).toBe(true);
+    expect(schemas.UpdateCalendarSchema.safeParse({ calendar_id: 'cal_1', prevent_overlaps: 'yes' }).success).toBe(false);
+  });
+
   it('deleteCalendar returns success', async () => {
     const result = await fns.deleteCalendar({ client: asClient(), params: { calendar_id: 'cal_1' } });
     expect(result).toEqual({ result: { success: true }, isError: false });

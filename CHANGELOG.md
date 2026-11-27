@@ -2,7 +2,11 @@
 
 All notable changes to `@chronary/toolkit` will be documented in this file starting with the soft-launch release.
 
-## 1.8.1 — unreleased
+## 1.8.2 — unreleased
+
+- **`create_calendar` and `update_calendar` take `prevent_overlaps` (#595).** With it on, the calendar refuses any event that would overlap an active event on it. A tool error now carries `code` and `conflicting_event_ids` when the API sent them, for example `{ "error": "conflict", "code": "event_conflict", "conflicting_event_ids": [...] }`. Needs `@chronary/sdk` 0.14.1.
+
+## 1.8.1 — 2026-11-25
 
 - `list_agents` takes `include_decommissioned` (#2749), as `GET /v1/agents` does: decommissioned agents are left out unless it is `true` or `status` is set. Its description now says so, and that the list is newest first and pages with `next_cursor`. `list_calendars`' description now says that an Organization key gets shared calendars unless it passes `include: "all"` or `agent_id` (it said every calendar, which was never the behaviour). The hosted MCP server's `list_agents` and `list_calendars` now match the toolkit's (same parameters, `cursor` and `next_cursor`).
 

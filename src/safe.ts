@@ -15,6 +15,10 @@ export interface ToolErrorPayload {
   feature?: string;
   metric?: string;
   limit?: number;
+  /** The specific reason on some errors, e.g. `event_conflict` on a calendar that refuses overlapping events. */
+  code?: string;
+  /** The events in the way (`event_conflict`, `calendar_has_overlaps`, `calendar_has_recurring_series`). */
+  conflicting_event_ids?: string[];
 }
 
 /** Serialize a thrown value into the structured error payload (undefined fields omitted). */
@@ -30,6 +34,8 @@ export function toErrorPayload(err: unknown): ToolErrorPayload {
     if (err.feature !== undefined) payload.feature = err.feature;
     if (err.metric !== undefined) payload.metric = err.metric;
     if (err.limit !== undefined) payload.limit = err.limit;
+    if (err.code !== undefined) payload.code = err.code;
+    if (err.conflictingEventIds.length > 0) payload.conflicting_event_ids = err.conflictingEventIds;
     return payload;
   }
   return { error: 'error', message: err instanceof Error ? err.message : String(err) };
